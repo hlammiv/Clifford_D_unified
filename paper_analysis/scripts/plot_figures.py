@@ -74,7 +74,7 @@ def load_prescribed():
 
 def headline(rows, pts):
     delta, _ = mn.eps_penalty()
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(st.PAGE_W, 2.7))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(st.PAGE_W, 3.0))
     xx = np.linspace(0, 11, 50)
     x3 = xx * L10_3
 
@@ -86,7 +86,7 @@ def headline(rows, pts):
     # every computed approximant, faint (group style: raw samples at alpha ~0.15)
     a1.scatter(np.array(xs3) / L10_3, ys, s=4, color=st.BLUE, alpha=0.15, lw=0, rasterized=True, zorder=2)
     a1.errorbar(m[:, 0], m[:, 1], yerr=m[:, 2], fmt=st.CD["marker"], color=st.BLUE, zorder=4,
-                label=CDL + r", special $\theta$ (data)", **st.MARKER_KW)
+                label=CDL + r", $\theta_{\rm s}$", **st.MARKER_KW)
     # measured prescribed-angle approximants (tight targets): faint open points (thinned for display)
     pr = load_prescribed()
     rng = np.random.default_rng(0)
@@ -99,9 +99,9 @@ def headline(rows, pts):
     mp = np.array([(np.median([q[0] for q in v]) / L10_3, np.mean([q[1] for q in v]),
                     np.std([q[1] for q in v], ddof=1) / np.sqrt(len(v))) for _, v in sorted(by.items())])
     a1.errorbar(mp[:, 0], mp[:, 1], yerr=mp[:, 2], fmt="o", color=st.BLUE, mfc="white", markeredgecolor=st.BLUE,
-                markeredgewidth=0.8, zorder=5, label=CDL + r", prescribed $\theta$ (data)")
+                markeredgewidth=0.8, zorder=5, label=CDL + r", $\theta_{\rm p}$")
     a1.plot(xx, f["a"] + f["b"] * x3, ":", color=st.BLUE, lw=1.0)
-    a1.plot(xx, f["a"] + f["b"] * (x3 + delta), "-", color=st.BLUE, label=CDL + r", prescribed $\theta$ (shifted fit)")
+    a1.plot(xx, f["a"] + f["b"] * (x3 + delta), "-", color=st.BLUE, label=CDL + r", $\theta_{\rm p}$ (shifted fit)")
     a1.plot(xx, mn.CR["Householder"][0] + mn.CR["Householder"][1] * xx, "-", color=st.ORANGE,
             label=CRL + ", Householder")
     a1.plot(xx, mn.CR["Exhaustive"][0] + mn.CR["Exhaustive"][1] * xx, "-.", color=st.ORANGE,
@@ -109,8 +109,8 @@ def headline(rows, pts):
     a1.plot(xx, -2.16 + 4.90 * x3, ":", color=st.BLACK, lw=1.0, label="covering bound")
     st.finish_axes(a1, xlabel=r"$\log_{10}(1/\varepsilon)$", ylabel=r"per-phase count $N_\varphi$")
     a1.set_xlim(0, 11); a1.set_ylim(0, 140)
-    a1.legend(loc="upper left")
-    a1.text(0.97, 0.04, "(a)", transform=a1.transAxes, ha="right")
+    a1.legend(loc="lower left", bbox_to_anchor=(0.0, 1.02), ncol=2, fontsize=6.3, borderaxespad=0.0)
+    a1.text(0.03, 0.95, "(a)", transform=a1.transAxes, va="top")
 
     # (b) T gates per rotation: C+D markers are special-angle means, lines are at a prescribed angle
     for model in ("unitary", "meas"):
@@ -133,8 +133,8 @@ def headline(rows, pts):
                 label=f"{CRL}, {MODEL_LABEL[model]}")
     st.finish_axes(a2, xlabel=r"$\log_{10}(1/\varepsilon)$", ylabel=TQ + r" gates per $R_z(\theta)$")
     a2.set_xlim(0, 11); a2.set_ylim(0, 800)
-    a2.legend(loc="upper left")
-    a2.text(0.97, 0.04, "(b)", transform=a2.transAxes, ha="right")
+    a2.legend(loc="lower left", bbox_to_anchor=(0.0, 1.02), ncol=2, fontsize=6.3, borderaxespad=0.0)
+    a2.text(0.03, 0.95, "(b)", transform=a2.transAxes, va="top")
     fig.tight_layout(w_pad=2.0)
     fig.savefig(FIG / "headline.pdf", dpi=400)
 
