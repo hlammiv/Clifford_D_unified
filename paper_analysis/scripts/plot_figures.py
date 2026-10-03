@@ -74,7 +74,7 @@ def load_prescribed():
 
 def headline(rows, pts):
     delta, _ = mn.eps_penalty()
-    fig, (a1, a2) = plt.subplots(1, 2, figsize=(st.PAGE_W, 3.0))
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(st.PAGE_W, 2.8))
     xx = np.linspace(0, 11, 50)
     x3 = xx * L10_3
 
@@ -108,8 +108,8 @@ def headline(rows, pts):
             label=CRL + ", exhaustive")
     a1.plot(xx, -2.16 + 4.90 * x3, ":", color=st.BLACK, lw=1.0, label="covering bound")
     st.finish_axes(a1, xlabel=r"$\log_{10}(1/\varepsilon)$", ylabel=r"per-phase count $N_\varphi$")
-    a1.set_xlim(0, 11); a1.set_ylim(0, 140)
-    a1.legend(loc="lower left", bbox_to_anchor=(0.0, 1.02), ncol=2, fontsize=6.3, borderaxespad=0.0)
+    a1.set_xlim(0, 11); a1.set_ylim(0, 185)
+    a1.legend(loc="upper left", bbox_to_anchor=(0.07, 0.99), ncol=2, fontsize=6.3, columnspacing=1.0)
     a1.text(0.03, 0.95, "(a)", transform=a1.transAxes, va="top")
 
     # (b) T gates per rotation: C+D markers are special-angle means, lines are at a prescribed angle
@@ -133,7 +133,7 @@ def headline(rows, pts):
                 label=f"{CRL}, {MODEL_LABEL[model]}")
     st.finish_axes(a2, xlabel=r"$\log_{10}(1/\varepsilon)$", ylabel=TQ + r" gates per $R_z(\theta)$")
     a2.set_xlim(0, 11); a2.set_ylim(0, 800)
-    a2.legend(loc="lower left", bbox_to_anchor=(0.0, 1.02), ncol=2, fontsize=6.3, borderaxespad=0.0)
+    a2.legend(loc="upper left", bbox_to_anchor=(0.07, 0.99), fontsize=6.3)
     a2.text(0.03, 0.95, "(b)", transform=a2.transAxes, va="top")
     fig.tight_layout(w_pad=2.0)
     fig.savefig(FIG / "headline.pdf", dpi=400)
