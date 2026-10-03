@@ -3,7 +3,7 @@
 Follows the group style of QC/circuit_knitting/circuit_knitting/scripts/paper_figure_style.py:
 Okabe--Ito colors, the series order blue/circle, vermillion/square, green/triangle, black
 for exact or reference curves, LaTeX text in Latin Modern, full axes box with a light grid,
-and markers with a thin white edge.
+markers with a thin white edge, and frameless (transparent) legends.
 
 Semantic assignment for this paper (fixed across every figure):
   C+D            BLUE, circle      (series 1)
@@ -60,6 +60,7 @@ def apply_paper_style() -> None:
         "errorbar.capsize": 2.0,
         "hatch.linewidth": 0.6,
         "axes.axisbelow": True,
+        "legend.frameon": False,      # no box, transparent background
         "savefig.bbox": "tight",
         "savefig.pad_inches": 0.04,
         "pdf.fonttype": 42,
