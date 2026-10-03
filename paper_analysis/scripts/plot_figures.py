@@ -55,6 +55,23 @@ def per_level_means(pts):
     return np.array(out)
 
 
+# Prescribed-angle approximants plotted in Fig. 2(a): tight-target searches only (Table IV shows
+# that looser targets give systematically different words).  Key: sde_3 -> loosest target kept.
+TIGHT_TARGET = {4: 1e-2, 6: 1e-3, 8: 1e-3}
+
+
+def load_prescribed():
+    import csv
+    out = []
+    for r in csv.DictReader(open(mn.ROOT / "analysis" / "prescribed_theta" / "prescribed_counts.csv")):
+        if r["ok"] != "1" or r["eps_ok"] != "1":
+            continue
+        k = int(r["sde"])
+        if k in TIGHT_TARGET and float(r["target_eps"]) <= TIGHT_TARGET[k] * (1 + 1e-9):
+            out.append((k, mn.L3(float(r["achieved_eps"])), float(r["N_phi"])))
+    return out
+
+
 def headline(rows, pts):
     delta, _ = mn.eps_penalty()
     fig, (a1, a2) = plt.subplots(1, 2, figsize=(st.PAGE_W, 2.7))
@@ -69,9 +86,22 @@ def headline(rows, pts):
     # every computed approximant, faint (group style: raw samples at alpha ~0.15)
     a1.scatter(np.array(xs3) / L10_3, ys, s=4, color=st.BLUE, alpha=0.15, lw=0, rasterized=True, zorder=2)
     a1.errorbar(m[:, 0], m[:, 1], yerr=m[:, 2], fmt=st.CD["marker"], color=st.BLUE, zorder=4,
-                label=CDL + r", special $\theta$", **st.MARKER_KW)
+                label=CDL + r", special $\theta$ (data)", **st.MARKER_KW)
+    # measured prescribed-angle approximants (tight targets): faint open points (thinned for display)
+    pr = load_prescribed()
+    rng = np.random.default_rng(0)
+    by = collections.defaultdict(list)
+    for k, x, y in pr:
+        by[k].append((x, y))
+    show = [q for v in by.values() for q in (v if len(v) <= 300 else [v[i] for i in rng.choice(len(v), 300, replace=False)])]
+    a1.scatter([q[0] / L10_3 for q in show], [q[1] for q in show], s=5, facecolors="none", edgecolors=st.BLUE,
+               alpha=0.35, linewidths=0.4, rasterized=True, zorder=2)
+    mp = np.array([(np.median([q[0] for q in v]) / L10_3, np.mean([q[1] for q in v]),
+                    np.std([q[1] for q in v], ddof=1) / np.sqrt(len(v))) for _, v in sorted(by.items())])
+    a1.errorbar(mp[:, 0], mp[:, 1], yerr=mp[:, 2], fmt="o", color=st.BLUE, mfc="white", markeredgecolor=st.BLUE,
+                markeredgewidth=0.8, zorder=5, label=CDL + r", prescribed $\theta$ (data)")
     a1.plot(xx, f["a"] + f["b"] * x3, ":", color=st.BLUE, lw=1.0)
-    a1.plot(xx, f["a"] + f["b"] * (x3 + delta), "-", color=st.BLUE, label=CDL + r", prescribed $\theta$")
+    a1.plot(xx, f["a"] + f["b"] * (x3 + delta), "-", color=st.BLUE, label=CDL + r", prescribed $\theta$ (shifted fit)")
     a1.plot(xx, mn.CR["Householder"][0] + mn.CR["Householder"][1] * xx, "-", color=st.ORANGE,
             label=CRL + ", Householder")
     a1.plot(xx, mn.CR["Exhaustive"][0] + mn.CR["Exhaustive"][1] * xx, "-.", color=st.ORANGE,
