@@ -66,6 +66,8 @@ def headline(rows, pts):
     ys = [r["N_D"] for r in rows]
     f = mn.jackfit(xs3, ys)
     m = per_level_means(zip(xs3, ys))
+    # every computed approximant, faint (group style: raw samples at alpha ~0.15)
+    a1.scatter(np.array(xs3) / L10_3, ys, s=4, color=st.BLUE, alpha=0.15, lw=0, rasterized=True, zorder=2)
     a1.errorbar(m[:, 0], m[:, 1], yerr=m[:, 2], fmt=st.CD["marker"], color=st.BLUE, zorder=4,
                 label=CDL + r", special $\theta$", **st.MARKER_KW)
     a1.plot(xx, f["a"] + f["b"] * x3, ":", color=st.BLUE, lw=1.0)
@@ -85,6 +87,11 @@ def headline(rows, pts):
         p = np.array(pts[(model, "best")])
         g = mn.jackfit(p[:, 0], p[:, 1])
         mm = per_level_means(map(tuple, p))
+        if model == "unitary":
+            a2.scatter(p[:, 0] / L10_3, p[:, 1], s=4, color=st.BLUE, alpha=0.25, lw=0, rasterized=True, zorder=2)
+        else:
+            a2.scatter(p[:, 0] / L10_3, p[:, 1], s=5, facecolors="none", edgecolors=st.BLUE, alpha=0.4,
+                       linewidths=0.4, rasterized=True, zorder=2)
         a2.errorbar(mm[:, 0], mm[:, 1], yerr=mm[:, 2], fmt=st.CD["marker"], color=st.BLUE, zorder=4,
                     mfc=st.BLUE if model == "unitary" else "white",
                     markeredgecolor="white" if model == "unitary" else st.BLUE, markeredgewidth=0.8)
@@ -99,7 +106,7 @@ def headline(rows, pts):
     a2.legend(loc="upper left")
     a2.text(0.97, 0.04, "(b)", transform=a2.transAxes, ha="right")
     fig.tight_layout(w_pad=2.0)
-    fig.savefig(FIG / "headline.pdf")
+    fig.savefig(FIG / "headline.pdf", dpi=400)
 
 
 def composition():
