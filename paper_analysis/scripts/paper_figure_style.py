@@ -10,9 +10,10 @@ Semantic assignment for this paper (fixed across every figure):
   C+R            ORANGE, square    (series 2)
   two qubits     GREEN, triangle   (series 3)
   bounds/limits  BLACK, dotted
-  gadget model   unitary: solid line / solid bar;  measurement: dashed line / hatched bar
-  gate class     T-type SKY, level-4 AMBER, R PURPLE (remaining Okabe--Ito colors;
-                 used only where gates are split by class)
+  gadget model   unitary: solid line, filled marker, plain bar
+                 measurement: dashed line, open marker, bar with white hatching
+  gate class     shade of the gate-set color: T-type lightest, level-4 medium, R full color
+                 (only where a bar is split by class)
 """
 
 from __future__ import annotations
@@ -33,8 +34,14 @@ CD = dict(color=BLUE, marker="o")
 CR = dict(color=ORANGE, marker="s")
 QUBIT = dict(color=GREEN, marker="^")
 MODEL_LS = {"unitary": "-", "meas": "--"}
-MODEL_HATCH = {"unitary": None, "meas": "////"}
-CLASS_COLORS = {"T": SKY, "L": AMBER, "R": PURPLE}
+CLASS_SHADE = {"T": 0.35, "L": 0.65, "R": 1.0}      # fraction of the gate-set color (rest white)
+BAR_HATCH = {"unitary": None, "meas": "////"}       # hatch lines drawn in white over the fill
+
+
+def shade(color: str, frac: float) -> tuple:
+    """Blend a color with white: frac = 1 gives the color, 0 gives white."""
+    r, g, b = mpl.colors.to_rgb(color)
+    return (1 - frac + frac * r, 1 - frac + frac * g, 1 - frac + frac * b)
 
 COL_W = 3.4          # inches, one PRA column
 PAGE_W = 7.0         # inches, two columns

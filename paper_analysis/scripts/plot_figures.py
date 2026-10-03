@@ -140,20 +140,20 @@ def headline(rows, pts):
 
 
 def composition():
-    """Class content of one rotation at a prescribed angle and eps = 1e-10."""
+    """Class content of one rotation at a prescribed angle and eps = 1e-10.
+    Hue = gate set, shade = gate class, white hatching = measurement gadgets."""
     c = json.loads((mn.ROOT / "tables" / "composition.json").read_text())
     k = c["classes"]["unitary"]            # the same copy is cheapest in both models (w4 = wR)
     nT, n4, nR = k["n_T3"], k["n_L4"], k["n_R"]
     NR = c["CR_NR"]["Householder"]
-    col = st.CLASS_COLORS
+    sh = lambda col, cls: st.shade(col, st.CLASS_SHADE[cls])  # noqa: E731
     fig, axes = plt.subplots(2, 1, figsize=(st.COL_W, 2.7), gridspec_kw=dict(height_ratios=[2, 4], hspace=0.85))
 
     def bars(ax, rows, xmax, xlabel):
         for y, (_, segs, hatch) in enumerate(rows):
             left = 0.0
             for val, color in segs:
-                ax.barh(y, val, left=left, color=color, height=0.62, edgecolor="white" if not hatch else "white",
-                        linewidth=0.8, hatch=hatch)
+                ax.barh(y, val, left=left, color=color, height=0.62, edgecolor="white", linewidth=0.8, hatch=hatch)
                 left += val
             ax.text(left + xmax * 0.012, y, f"{left:.0f}", va="center", fontsize=6.5)
         ax.set_yticks(range(len(rows)), [r[0] for r in rows])
@@ -161,16 +161,18 @@ def composition():
         ax.set_xlim(0, xmax)
         st.finish_axes(ax, xlabel=xlabel, ylabel="", grid_axis="x")
 
-    bars(axes[0], [(CDL, [(2 * nT, col["T"]), (n4, col["L"]), (nR, col["R"])], None),
-                   (CRL, [(NR, col["R"])], None)], 140, r"per-phase count $N_\varphi$")
+    cd_segs = lambda w: [(w[0] * nT, sh(st.BLUE, "T")), (w[1] * n4, sh(st.BLUE, "L")), (w[1] * nR, sh(st.BLUE, "R"))]  # noqa: E731
+    bars(axes[0], [(CDL, cd_segs((2, 1)), None), (CRL, [(NR, sh(st.ORANGE, "R"))], None)], 140,
+         r"per-phase count $N_\varphi$")
     rows = []
     for model in ("unitary", "meas"):
         w = c["R_COST"][model]
-        h = st.MODEL_HATCH[model]
-        rows.append((f"{CDL}, {MODEL_LABEL[model]}", [(nT, col["T"]), (w * n4, col["L"]), (w * nR, col["R"])], h))
-        rows.append((f"{CRL}, {MODEL_LABEL[model]}", [(w * NR, col["R"])], h))
+        h = st.BAR_HATCH[model]
+        rows.append((f"{CDL}, {MODEL_LABEL[model]}", cd_segs((1, w)), h))
+        rows.append((f"{CRL}, {MODEL_LABEL[model]}", [(w * NR, sh(st.ORANGE, "R"))], h))
     bars(axes[1], rows, 880, TQ + " gates")
-    handles = [plt.Rectangle((0, 0), 1, 1, color=col[x]) for x in "TLR"]
+    # class key: shades of a neutral gray, since the shade (not the hue) encodes the class
+    handles = [plt.Rectangle((0, 0), 1, 1, color=st.shade("#555555", st.CLASS_SHADE[x])) for x in "TLR"]
     axes[0].legend(handles, [r"$T$-type", "level-4", r"$\mathbf{R}$"], loc="lower right", ncol=3,
                    bbox_to_anchor=(1.0, 1.02), handlelength=1.0, columnspacing=0.8)
     fig.savefig(FIG / "composition.pdf")
@@ -180,16 +182,13 @@ def qubit():
     """Magic states per arbitrary single-qutrit gate (6 rotations) vs two-qubit emulation (10 R_z)."""
     n = numbers()
     num = lambda key: float(n[key].replace("{,}", ""))  # noqa: E731
-    rows = [(f"qutrit {CDL}, unitary", num("Qutritunitary"), st.BLUE, st.MODEL_HATCH["unitary"]),
-            (f"qutrit {CDL}, measurement", num("Qutritmeas"), st.BLUE, st.MODEL_HATCH["meas"]),
+    rows = [(f"qutrit {CDL}, unitary", num("Qutritunitary"), st.BLUE, st.BAR_HATCH["unitary"]),
+            (f"qutrit {CDL}, measurement", num("Qutritmeas"), st.BLUE, st.BAR_HATCH["meas"]),
             ("two qubits, deterministic", num("QubitDet"), st.GREEN, None),
-            ("two qubits, RUS", num("QubitRUS"), st.GREEN, "////")]
+            ("two qubits, RUS", num("QubitRUS"), st.GREEN, None)]
     fig, ax = plt.subplots(figsize=(st.COL_W, 1.8))
     for y, (lab, v, color, hatch) in enumerate(rows):
-        if hatch:
-            ax.barh(y, v, height=0.62, color="white", edgecolor=color, hatch=hatch, linewidth=0.8)
-        else:
-            ax.barh(y, v, height=0.62, color=color, edgecolor=color, linewidth=0.8)
+        ax.barh(y, v, height=0.62, color=color, edgecolor="white", linewidth=0.8, hatch=hatch)
         ax.text(v + 20, y, f"{v:,.0f}", va="center", fontsize=6.5)
     ax.set_yticks(range(len(rows)), [r[0] for r in rows])
     ax.invert_yaxis()
