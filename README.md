@@ -14,7 +14,7 @@ and the level-4 phases.
 
 Requirements: Python ≥ 3.10 with the packages in [`requirements.txt`](requirements.txt).
 The search backends additionally need a C++17 compiler (`hrsa/`, `esa/`) and Sage/PARI with
-mpi4py (`zeta9/`); reproducing the tables and figures does not.
+mpi4py (`zeta9/`); reproducing the tables and figures does not. The figures render text with LaTeX (Latin Modern), so they need a TeX installation.
 
 ```bash
 cd results_bundle && ./verify_all.sh          # gadgets, emitter, certificates, tables (8 checks)
@@ -26,7 +26,7 @@ python3 scripts/plot_figures.py               # every data figure -> fig/
 | Paper item | Script | Input data |
 |---|---|---|
 | Numbers in the text and all data tables | `paper_analysis/scripts/make_numbers.py` | `nick_test/nick_tcost_2026-09-30.csv`, `symmetry_variants/stack_full30_rows.csv.gz`, `nick_request/topk_run/fast_all30_candidates.csv`, `paper_analysis/analysis/prescribed_theta/compare_results.json` |
-| Data figures (headline, gate-class composition, qutrit vs two qubits, special angles) | `paper_analysis/scripts/plot_figures.py` (one color and marker scheme, documented in its header) | as above, plus `paper_analysis/tables/composition.json` and `paper_analysis/analysis/special_angles/ang_f*.npz` |
+| Data figures (headline, gate-class composition, qutrit vs two qubits, special angles) | `paper_analysis/scripts/plot_figures.py`, style in `paper_figure_style.py` | as above, plus `paper_analysis/tables/composition.json` and `paper_analysis/analysis/special_angles/ang_f*.npz` |
 | Exact approximants (900 matrices) | — | `nick_test/fits_f={4..16}.txt` (θ and 3^f·V, six integers per entry) |
 | Gate counts of the 900 approximants | `nick_test/nick_tcost_all.py` | `nick_test/fits_f=*.txt` |
 | Phase-copy selection | `symmetry_variants/variant_search.py`, `stack_analyze.py` | `nick_test/fits_f=*.txt` |
