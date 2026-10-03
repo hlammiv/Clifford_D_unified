@@ -136,6 +136,35 @@ def eps_penalty():
     return max(pen.values()), pen
 
 
+# Prescribed-angle runs with a uniform protocol (one candidate, no selection, one thread).
+# For the (sde_3, target) cells they cover, they replace the older mixed sweeps, several of
+# which kept the cheapest of 20 candidates and so biased the counts.
+# analysis/prescribed_theta/run_sde4.py.  Key: sde_3 -> (sweep, targets or None for all).
+UNIFORM = {4: ("sweep_hrsa_sde4_2026-10-03", None),
+           6: ("sweep_hrsa_sde6_2026-10-03", (0.01,))}
+
+
+def prescribed_by_target(pj):
+    """Prescribed minus special mean counts at equal sde, by search target."""
+    sp = {r["sde"]: r for r in pj["per_sde"] if r["set"] == "special"}
+    covered = lambda sde, t: sde in UNIFORM and (UNIFORM[sde][1] is None or t in UNIFORM[sde][1])  # noqa: E731
+    rows = [dict(r, uniform=False) for r in pj["per_sde_target"] if not covered(r["sde"], r["target_eps"])]
+    by = collections.defaultdict(list)
+    for r in csv.DictReader(open(PRESCRIBED_JSON.parent / "prescribed_counts.csv")):
+        if r["ok"] != "1" or r["eps_ok"] != "1":
+            continue
+        k, t = int(r["sde"]), float(r["target_eps"])
+        if covered(k, t) and UNIFORM[k][0] in r["sources"]:
+            by[(k, t)].append((float(r["N_phi"]), float(r["tcost_unitary"])))
+    for (k, t), v in by.items():
+        a = np.array(v)
+        se = a.std(axis=0, ddof=1) / np.sqrt(len(a))
+        rows.append(dict(sde=k, target_eps=t, n=len(a), uniform=True,
+                         dN=a[:, 0].mean() - sp[k]["N_phi"][0], dN_se=float(np.hypot(se[0], sp[k]["N_phi"][1])),
+                         dT=a[:, 1].mean() - sp[k]["tcost_unitary"][0],
+                         dT_se=float(np.hypot(se[1], sp[k]["tcost_unitary"][1]))))
+    return sorted(rows, key=lambda r: (r["sde"], r["target_eps"]))
+
 def composition(delta):
     """Mean class counts (n_T, n_4, n_R) of the cheapest phase copy at a prescribed angle and
     eps = 1e-10, for each gadget model.  Fits each class on the copy that minimises that model's
@@ -262,14 +291,14 @@ def main():
         out.append(macro(f"Eps{tag}Eight", f"{mant}\\times10^{{{int(ex)}}}"))
     out.append(macro("Nprescribed", "11{,}403"))
     rowsp, last = [], None
-    for r in pj["per_sde_target"]:
+    for r in prescribed_by_target(pj):
         if r["sde"] != last and last is not None:
             rowsp.append("\\MidRule")
-        tgt = "all" if r["target_eps"] == 0 else f"$10^{{{int(round(math.log10(r['target_eps'])))}}}$" \
-            if abs(math.log10(r["target_eps"]) - round(math.log10(r["target_eps"]))) < 1e-9 else f"{r['target_eps']:g}"
-        rowsp.append(f"{r['sde'] if r['sde'] != last else ''} & {tgt} & {r['n']:,} & "
-                     f"${pm(r['dN'], r['dN_se'], 1)}$ & ${pm(r['dT'], r['dT_se'], 1)}$ \\\\".replace(",", "{,}") if r['n'] >= 1000 else
-                     f"{r['sde'] if r['sde'] != last else ''} & {tgt} & {r['n']} & "
+        lt = math.log10(r["target_eps"])
+        tgt = f"$10^{{{int(round(lt))}}}$" if abs(lt - round(lt)) < 1e-9 else f"{r['target_eps']:g}"
+        n = f"{r['n']:,}".replace(",", "{,}")
+        mark = "" if r["uniform"] else "$^\\dagger$"
+        rowsp.append(f"{r['sde'] if r['sde'] != last else ''} & {tgt}{mark} & {n} & "
                      f"${pm(r['dN'], r['dN_se'], 1)}$ & ${pm(r['dT'], r['dT_se'], 1)}$ \\\\")
         last = r["sde"]
     (ROOT / "tables" / "prescribed_rows.tex").write_text("\n".join(rowsp) + "\n")
