@@ -182,10 +182,10 @@ def qubit():
     """Magic states per arbitrary single-qutrit gate (6 rotations) vs two-qubit emulation (10 R_z)."""
     n = numbers()
     num = lambda key: float(n[key].replace("{,}", ""))  # noqa: E731
-    rows = [(f"qutrit {CDL}, unitary", num("Qutritunitary"), st.BLUE, st.BAR_HATCH["unitary"]),
-            (f"qutrit {CDL}, measurement", num("Qutritmeas"), st.BLUE, st.BAR_HATCH["meas"]),
-            ("two qubits, deterministic", num("QubitDet"), st.GREEN, None),
-            ("two qubits, RUS", num("QubitRUS"), st.GREEN, None)]
+    rows = [(f"{CDL}, unitary", num("Qutritunitary"), st.BLUE, st.BAR_HATCH["unitary"]),
+            (f"{CDL}, measurement", num("Qutritmeas"), st.BLUE, st.BAR_HATCH["meas"]),
+            (r"$(\mathbf{C}+\mathbf{T})_2$, deterministic", num("QubitDet"), st.GREEN, None),
+            (r"$(\mathbf{C}+\mathbf{T})_2$, RUS", num("QubitRUS"), st.GREEN, None)]
     fig, ax = plt.subplots(figsize=(st.COL_W, 1.8))
     for y, (lab, v, color, hatch) in enumerate(rows):
         ax.barh(y, v, height=0.62, color=color, edgecolor="white", linewidth=0.8, hatch=hatch)
