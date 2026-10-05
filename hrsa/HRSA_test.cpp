@@ -27,6 +27,9 @@ std::atomic<bool> interrupted(false); // For clean exiting with Ctrl+C if execut
 // Toggled by `--no-simplify`.  Defined in decompose.cpp.
 extern bool g_decompose_simplify;
 extern bool g_decompose_lookahead;
+// Toggled by `--no-decompose`: write the HRSA unitary without decomposing it here
+// (callers that re-decompose externally skip ~13 s per run of table building).
+static bool g_no_decompose = false;
 extern bool g_hrsa_alt_order;
 extern int  g_hrsa_rf_gate;
 extern bool g_hrsa_mod3_filter;
@@ -51,6 +54,7 @@ int main(int argc, char* argv[]){
 		cout << "  --tcost-w4 W / --tcost-wr W : T-cost weights for level-4 diagonals / R (default 7 / 7)" << endl;
 		cout << "  --max-direct K       : direct search up to K D-gates (default 2, 0=Clifford only)" << endl;
 		cout << "  --no-direct          : skip direct search, go straight to HRSA" << endl;
+		cout << "  --no-decompose       : write the HRSA unitary to --json without decomposing it" << endl;
 		cout << "  --use-bidir MAX_K    : enable Phase 2 bidirectional BFS (MAX_K ∈ {3,4,5}; off by default)" << endl;
 		cout << "  --no-simplify        : disable post-pass rewrite simplifier on decompose()" << endl;
 		cout << "  --json PATH          : write JSON result to PATH" << endl;
@@ -82,6 +86,8 @@ int main(int argc, char* argv[]){
 		} else if(strcmp(argv[i], "--max-direct") == 0 && i+1 < argc){
 			max_direct = atoi(argv[++i]);
 			if(max_direct < 0) max_direct = 0;
+		} else if(strcmp(argv[i], "--no-decompose") == 0){
+			g_no_decompose = true;
 		} else if(strcmp(argv[i], "--no-direct") == 0){
 			max_direct = -1;  // skip direct search entirely
 		} else if(strcmp(argv[i], "--use-bidir") == 0 && i+1 < argc){
@@ -354,7 +360,8 @@ int main(int argc, char* argv[]){
 			auto _ts_bu = chrono::steady_clock::now();
 			Mat3 V = buildUnitary(output2);
 			auto _ts_dec_start = chrono::steady_clock::now();
-			DecompResult dr = decompose(V, true);
+			DecompResult dr;
+			if (!g_no_decompose) dr = decompose(V, true);
 			auto _ts_dec_end = chrono::steady_clock::now();
 			cerr << "[PROF] buildUnitary() wall = "
 			     << chrono::duration<double>(_ts_dec_start - _ts_bu).count() << " s" << endl;
@@ -363,7 +370,7 @@ int main(int argc, char* argv[]){
 			result_V = V;
 			result_V_set = true;
 			result_dr = dr;
-			result_dr_set = true;
+			result_dr_set = !g_no_decompose;
 
 			// Compute Frobenius distance for summary
 
@@ -371,7 +378,7 @@ int main(int argc, char* argv[]){
 			result_f = output2[0].getExp();
 
 			method = "HRSA(f=" + to_string(result_f) + ")";
-			result_D = dr.success ? dr.D_count : -1;
+			result_D = (!g_no_decompose && dr.success) ? dr.D_count : -1;
 			// Use Matrix Frobenius distance (computed by matrixFrobeniusCheck)
 			// Recompute it here for the summary
 			{
@@ -396,7 +403,7 @@ int main(int argc, char* argv[]){
 			// the Clifford group); decompose() flags these via success=false
 			// because the fast-path can't count their D-gates.  Surfacing this
 			// as overall failure prevents the misleading N_D=0 / empty syllables.
-			found = dr.success;
+			found = g_no_decompose ? true : dr.success;
 		}
 	}
 
