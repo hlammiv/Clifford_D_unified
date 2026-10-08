@@ -31,6 +31,8 @@ extern bool g_hrsa_alt_order;
 extern int  g_hrsa_rf_gate;
 extern bool g_hrsa_mod3_filter;
 extern bool g_hrsa_rank_tcost;
+extern int  g_hrsa_min_f;
+extern bool g_hrsa_no_decompose;
 extern int  g_tcost_w4;
 extern int  g_tcost_wr;
 
@@ -47,6 +49,8 @@ int main(int argc, char* argv[]){
 		cout << "  max_f                : maximum f level to search" << endl;
 		cout << "  c                    : contraction factor in (0,1], default 1.0" << endl;
 		cout << "  --max-solns N        : collect N HRSA candidates, pick lowest D-count" << endl;
+		cout << "  --no-decompose       : skip all decompositions (pool collection / eps only)" << endl;
+		cout << "  --min-f N            : start the HRSA level search at f=N (default 0); with --max-solns gives a pool at one level" << endl;
 		cout << "  --rank-tcost         : with --max-solns, pick lowest T-cost (T3 + w4*L4 + wr*R) instead of D-count" << endl;
 		cout << "  --tcost-w4 W / --tcost-wr W : T-cost weights for level-4 diagonals / R (default 7 / 7)" << endl;
 		cout << "  --max-direct K       : direct search up to K D-gates (default 2, 0=Clifford only)" << endl;
@@ -92,6 +96,11 @@ int main(int argc, char* argv[]){
 			if(k3 < 1) k3 = 1;
 		} else if(strcmp(argv[i], "--no-simplify") == 0){
 			g_decompose_simplify = false;
+		} else if(strcmp(argv[i], "--no-decompose") == 0){
+			g_hrsa_no_decompose = true;
+		} else if(strcmp(argv[i], "--min-f") == 0 && i+1 < argc){
+			g_hrsa_min_f = atoi(argv[++i]);
+			if(g_hrsa_min_f < 0) g_hrsa_min_f = 0;
 		} else if(strcmp(argv[i], "--rank-tcost") == 0){
 			g_hrsa_rank_tcost = true;
 		} else if(strcmp(argv[i], "--tcost-w4") == 0 && i+1 < argc){
@@ -187,7 +196,8 @@ int main(int argc, char* argv[]){
 	// minimum is below epsilon, we have a sign-extended-Clifford solution
 	// with N_D = (S != I ? 1 : 0).  This catches cheap solutions that bidir
 	// (which doesn't include R) misses — e.g., diag(-ω, -ω², 1) at θ=2.14.
-	if (!found) {
+	// Skipped when --min-f > 0 (a single-level pool was requested; this is a level-0 shortcut).
+	if (!found && g_hrsa_min_f == 0) {
 		using cd = complex<double>;
 		const auto& cache = get_clifford_cache();
 		const auto& cliffs_c = cache.cliffords;  // CMat3 (floating-point) cache
@@ -354,7 +364,9 @@ int main(int argc, char* argv[]){
 			auto _ts_bu = chrono::steady_clock::now();
 			Mat3 V = buildUnitary(output2);
 			auto _ts_dec_start = chrono::steady_clock::now();
-			DecompResult dr = decompose(V, true);
+			DecompResult dr;
+			dr.success = false; dr.D_count = -1; dr.D_only = 0; dr.R_only = 0; dr.sde_chi = 0; dr.sde_chi_final = 0;
+			if(!g_hrsa_no_decompose) dr = decompose(V, true);
 			auto _ts_dec_end = chrono::steady_clock::now();
 			cerr << "[PROF] buildUnitary() wall = "
 			     << chrono::duration<double>(_ts_dec_start - _ts_bu).count() << " s" << endl;

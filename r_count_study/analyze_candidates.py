@@ -41,6 +41,14 @@ def build_V(n1, n2, n3, f):
     return [Hh[1][:], Hh[0][:], Hh[2][:]]
 
 
+def build_V_exps(n1, n2, n3, exps):
+    """build_V with a separate denominator exponent per element (HRSA CANDDUMP "E" field)."""
+    u = [fz(n, e) for n, e in zip((n1, n2, n3), exps)]
+    one = cr._FastZ9Frac.one(); zero = cr._FastZ9Frac.zero()
+    Hh = [[(one if i == j else zero) - u[i] * u[j].conjugate() for j in range(3)] for i in range(3)]
+    return [Hh[1][:], Hh[0][:], Hh[2][:]]
+
+
 def to_complex(zf):
     return complex(np.dot([int(c) for c in zf.num.coefs], BASIS) / 3 ** zf.denom_pow3)
 

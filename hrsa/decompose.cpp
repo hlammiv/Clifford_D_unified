@@ -51,6 +51,11 @@ bool g_hrsa_mod3_filter = false;
 // Weights per non-Clifford op on a qutrit T-factory device (1 clean ancilla):
 // T-type diagonal = 1 T, level-4 diagonal = g_tcost_w4 T, R = g_tcost_wr T
 // (verified 7-T constructions: unified/r_from_d/verify_R7T.py).
+// 2026-10-08: first f level HRSA/HRSA_bestD search (default 0 = original behaviour).
+// Used to collect candidate pools at exactly one level for prescribed-theta best fits.
+int  g_hrsa_min_f = 0;
+// 2026-10-08: --no-decompose (previously silently ignored by HRSA_tester): skip all decompositions.
+bool g_hrsa_no_decompose = false;
 bool g_hrsa_rank_tcost = false;
 int  g_tcost_w4 = 7;
 int  g_tcost_wr = 7;

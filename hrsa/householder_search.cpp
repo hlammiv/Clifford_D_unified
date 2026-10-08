@@ -35,6 +35,8 @@ const double FILTER_REL_TOL = 1e-6;
 extern std::atomic<bool> interrupted;
 extern bool g_hrsa_alt_order;  // defined in decompose.cpp; toggles outer x_1 alternating iteration
 extern bool g_hrsa_mod3_filter;  // defined in decompose.cpp; Kalra-Mosca-Valluri 2023 Thm 3.7 prune
+extern int  g_hrsa_min_f;
+extern bool g_hrsa_no_decompose; // defined in decompose.cpp; --no-decompose       // defined in decompose.cpp; first f level searched (default 0)
 extern bool g_hrsa_rank_tcost;  // defined in decompose.cpp; rank candidates by T-cost
 extern int  g_tcost_w4;
 extern int  g_tcost_wr;
@@ -71,7 +73,7 @@ extern int g_hrsa_rf_gate;     // defined in decompose.cpp; if >0, take union(di
 static mutex cout_mutex;
 
 array<ringZ9chi,3> HRSA(double theta, double epsilon, int max_f, double c){
-	int f = 0;
+	int f = g_hrsa_min_f;  // 2026-10-08: --min-f skips coarser levels
 	ringZ9chi zero;
 	array<ringZ9chi,3> answer;
 	vector<ringZ9> x1_cands, x2_cands;
@@ -609,7 +611,7 @@ void matrixFrobeniusCheck(const std::array<ringZ9chi,3>& u, double theta, double
 }
 
 array<ringZ9chi,3> HRSA_bestD(double theta, double epsilon, int max_f, double c, int max_solns, int k3){
-	int f = 0;
+	int f = g_hrsa_min_f;  // 2026-10-08: --min-f skips coarser levels
 	ringZ9chi zero;
 	array<ringZ9chi,3> answer;
 	vector<ringZ9> x1_cands, x2_cands;
@@ -796,6 +798,10 @@ array<ringZ9chi,3> HRSA_bestD(double theta, double epsilon, int max_f, double c,
 			// cout inside decompose() may interleave, but correctness is unaffected.
 			#pragma omp parallel for schedule(dynamic)
 			for(int s = 0; s < n_solns; ++s){
+				if(g_hrsa_no_decompose){             // pool collection only: report candidates, skip decomposition
+					d_counts[s] = 0;
+					continue;
+				}
 				Mat3 V = buildUnitary(solutions[s]);
 				DecompResult dr = decompose(V, true);  // quiet: suppress cout in parallel
 				d_counts[s] = dr.success ? dr.D_count : INT_MAX;
@@ -816,9 +822,15 @@ array<ringZ9chi,3> HRSA_bestD(double theta, double epsilon, int max_f, double c,
 				auto cdx1 = solutions[s][0].toComplexDouble();
 				auto cdx2 = solutions[s][1].toComplexDouble();
 				auto cdx3 = solutions[s][2].toComplexDouble();
-				ringZ9 num1 = solutions[s][0].getNumerator();
-				ringZ9 num2 = solutions[s][1].getNumerator();
-				ringZ9 num3 = solutions[s][2].getNumerator();
+				// 2026-10-08: reduce copies before printing. The ring stores 9 coefficients
+				// and getTerm/getStdArray do NOT fold ζ^6..ζ^8 back into the 6-element basis,
+				// so unreduced numerators printed wrong exact matrices. Exponents are appended
+				// at the end of the line ("E e1 e2 e3") as a consistency check.
+				ringZ9chi c1 = solutions[s][0], c2 = solutions[s][1], c3 = solutions[s][2];
+				c1.reduce(); c2.reduce(); c3.reduce();
+				ringZ9 num1 = c1.getNumerator();
+				ringZ9 num2 = c2.getNumerator();
+				ringZ9 num3 = c3.getNumerator();
 				cout << "CANDDUMP " << s << " "
 				     << (d_counts[s] < INT_MAX ? d_counts[s] : -1) << " "
 				     << cdx1.real() << " " << cdx1.imag() << " "
@@ -828,6 +840,7 @@ array<ringZ9chi,3> HRSA_bestD(double theta, double epsilon, int max_f, double c,
 				for(int kk = 0; kk < 6; ++kk) cout << " " << num1.getTerm(kk);
 				for(int kk = 0; kk < 6; ++kk) cout << " " << num2.getTerm(kk);
 				for(int kk = 0; kk < 6; ++kk) cout << " " << num3.getTerm(kk);
+				cout << " E " << c1.getExp() << " " << c2.getExp() << " " << c3.getExp();
 				cout << endl;
 				if(d_counts[s] < INT_MAX){
 					cout << "CANDTCOST " << s << " " << tcosts[s].n_t3 << " " << tcosts[s].n_l4
