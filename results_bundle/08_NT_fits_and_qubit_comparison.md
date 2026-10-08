@@ -77,3 +77,13 @@ A qutrit rotation costs ~1.4–1.5× a deterministic qubit rotation, and ~3× an
 2. **Physical footprint is not modelled:** one qutrit vs two qubits, and the corresponding code distances.
 3. **Model mismatch in the baselines.** The deterministic qubit baseline uses no measurement tricks. The cleanest like-for-like pairing is unitary + merging (0.93×) vs Ross–Selinger.
 4. **Sample size.** The C+D fits use 210 of Nick's matrices (30 θ × 7 f). The as-given unitary fit agrees with the 900-matrix fit (9.73 vs 10.0 per log₃).
+
+## ⚠ CORRECTION PENDING (2026-10-08): special-θ bias
+The N_T fits above use Nick's **special-θ** matrices, where each matrix's θ is its own best-fit angle. That selects for small ε.
+
+His best fits at 25 **generic** θ (f = 8, 10; `nick_fits25/`) have:
+- ~15× larger ε at the same f, at about the same T-cost;
+- so ~20% more T at a given ε;
+- two-point slope estimates of ~8.3 (meas) and ~12 (unitary) per log₃, vs 6.4 / 10.0. These are uncertain.
+
+Gustafson's C+R fits are over generic θ. **The like-for-like headline needs generic-θ fits at f = 12–16** (requested from Nick). The C+D advantage over C+R is expected to shrink from ~3.3–3.8× to roughly 2.5–3×. The qubit-parity statement (0.8–0.9×) likely becomes ~1×–1.2×. Treat the numbers above as optimistic until that refit.

@@ -24,3 +24,8 @@
 - **Factory space-time volume for qutrit T-states vs qubit T-states.** It is needed for a firm qutrit-vs-qubit statement (`05`).
 - **Qutrit RUS** (tabled). It cannot break the C+D/C+R tie, but could narrow the gap to qubit RUS.
 - **An approximation stage that targets low T-cost directly**, rather than filtering error-optimal candidates.
+
+## NEW (2026-10-08): generic-θ refit needed
+Nick's 25-θ fits show the special-θ headline is optimistic (~15× better ε at a given f; see `nick_fits25/README.md`).
+
+**Ask Nick for:** generic-θ best fits at f = 12, 14, 16 (ideally ~100 uniform θ, matching Gustafson), with the ε window wide enough that every fit is confirmed. Then refit N_T, using `nick_fits25/analyze_fits25.py` as the template.
