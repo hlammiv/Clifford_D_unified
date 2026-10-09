@@ -3,7 +3,7 @@
 
 Points, one per (θ, level), taking the best fit at that level:
   levels 2, 4, 6 : costs_l{2,4,6}.csv (analyze_pools.py; same angles as the Oct-3 sweep)
-  level 8        : costs_l8.csv (multi_theta pools, our HRSA semantics), when present
+  levels 8-12    : costs_l{8,10,12}.csv (multi_theta pools, our HRSA semantics), when present
   levels 8, 10   : ../nick_fits25/fits25_results.csv (Nick, 25 θ each)
 Level labels in the tables carry the source: o = ours, N = Nick.
 Two selections per model:
@@ -25,7 +25,7 @@ NAMES = {"T_unit": "unitary 7-T", "T_merged": "merged", "T_meas": "measurement 4
 
 def load():
     pts = []                                   # (level, eps, {model: (asis, copy|None)}, N_D)
-    for l in (2, 4, 6, 8):
+    for l in (2, 4, 6, 8, 10, 12):
         p = H / f"costs_l{l}.csv"
         if not p.exists():
             continue

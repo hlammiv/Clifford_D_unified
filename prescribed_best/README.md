@@ -29,6 +29,26 @@ Level 8 (500 θ, target 3e-4) ran on Lenore: 5.1 h on 8 threads, 2.7 GB; all 500
 It cross-checks Nick's generic f=8: median best ε 3.4e-5 (ours, 500 θ) vs 3.9e-5 (Nick, 25 θ);
 best-copy unitary T 112.9 vs 118.1. The fits below include it; see fit_generic_output.txt for the current table.
 
+## multi_theta fp mode (2026-10-09): Fincke–Pohst enumeration + norm-class join
+`multi_theta ... fp` replaces the ball enumeration and the x_1×x_2 pair loop:
+- **Enumeration:** LLL-reduced Fincke–Pohst over the ellipsoid
+  |σ_1/3^f − T|²/thr + |σ_2/3^f|²/2 + |σ_4/3^f|²/2 ≤ 3. That is a superset of the only region the pair search can use, followed by HRSA's exact float filters.
+  - At level 8 it visits 5×10⁷ points instead of ~10¹⁴.
+- **Join:** a triple is valid iff N(x_1)+N(x_2)+N(x_3) = 2·9^f in the real subring.
+  - A real-subring element is fixed by its reduced coefficients 0, 4 and 5.
+  - The loop runs over x_1 norm classes × x_3 classes, sorted by |x_3|² and pruned by ε; the x_2 class comes from a flat hash table.
+  - Every x_3 in a norm class gives the same ε, so HRSA's k3 = 1 selection picks the same (x_1, x_2) pairs.
+- **Validated:** identical (x_1, x_2) candidate sets to the ball/HRSA pools at level 6 (150 θ), level 8 (500 θ, vs the 5.1 h Lenore run) and level 10 (40 θ, vs the previous join).
+
+| Level | Angles | fp-mode wall (8 threads) | Before |
+|---|---|---|---|
+| 8 | 500 | 89 s (older join; now faster) | 5.1 h (ball) |
+| 10 | 500 | ~18 min (older join), ~3 min est. now | infeasible (months) |
+| 12 | 500 | 8.7 min, Lenore | – |
+| 14 | 100 | running | – |
+
+f ≤ 7 only, since int ring arithmetic overflows beyond that.
+
 ## HRSA changes made for this (2026-10-08)
 Default behaviour is unchanged.
 1. **`--no-decompose`** is now implemented. Before, it was silently ignored, as is any unknown flag. Skipping decomposition is ~1000× faster for pool collection.
