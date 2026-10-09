@@ -1,0 +1,10 @@
+GENERIC N_D (best-ε approximant, n=3135): -3.59 + 6.856·log3  (14.37·log10)  -> 140.1 @1e-10
+GENERIC N_T unitary  asis  (n=3135):  6.94 + 12.825·log3  (26.88·log10)  ->  275.7 @1e-10
+GENERIC N_T unitary  best  (n=798): -6.53 + 12.681·log3  (26.58·log10)  ->  259.2 @1e-10
+GENERIC N_T merged   asis  (n=3135):  5.00 + 9.538·log3  (19.99·log10)  ->  204.9 @1e-10
+GENERIC N_T merged   best  (n=798): -3.94 + 9.421·log3  (19.75·log10)  ->  193.5 @1e-10
+GENERIC N_T meas     asis  (n=3135):  2.85 + 8.481·log3  (17.78·log10)  ->  180.6 @1e-10
+GENERIC N_T meas     best  (n=798): -4.74 + 8.389·log3  (17.58·log10)  ->  171.1 @1e-10
+GENERIC C+D meas     best: rotation 171; vs C+R Householder 444 (x2.59), Exhaustive 354 (x2.07); per rotation x1.72 det, x3.61 RUS; arbitrary gate 6x = 1027: x1.03 det, x2.17 RUS
+GENERIC C+D merged   best: rotation 194; vs C+R Householder 554 (x2.87), Exhaustive 442 (x2.28); per rotation x1.94 det, x4.08 RUS; arbitrary gate 6x = 1161: x1.17 det, x2.45 RUS
+GENERIC C+D unitary  best: rotation 259; vs C+R Householder 776 (x2.99), Exhaustive 619 (x2.39); per rotation x2.60 det, x5.47 RUS; arbitrary gate 6x = 1555: x1.56 det, x3.28 RUS

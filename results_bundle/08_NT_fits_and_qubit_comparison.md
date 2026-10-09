@@ -78,12 +78,47 @@ A qutrit rotation costs ~1.4–1.5× a deterministic qubit rotation, and ~3× an
 3. **Model mismatch in the baselines.** The deterministic qubit baseline uses no measurement tricks. The cleanest like-for-like pairing is unitary + merging (0.93×) vs Ross–Selinger.
 4. **Sample size.** The C+D fits use 210 of Nick's matrices (30 θ × 7 f). The as-given unitary fit agrees with the 900-matrix fit (9.73 vs 10.0 per log₃).
 
-## ⚠ CORRECTION PENDING (2026-10-08): special-θ bias
-The N_T fits above use Nick's **special-θ** matrices, where each matrix's θ is its own best-fit angle. That selects for small ε.
+## ✅ RESOLVED (2026-10-09): generic-angle refit. This section is the headline.
+The tables above use Nick's **special-angle** matrices, which are biased toward small ε. The fits below are at **generic (prescribed) angles**:
+- `prescribed_best/`: our Householder-family pools at levels 2–14 (500 angles; 100 at level 14);
+- `nick_fits25/`: Nick's generic f = 8, 10.
 
-His best fits at 25 **generic** θ (f = 8, 10; `nick_fits25/`) have:
-- ~15× larger ε at the same f, at about the same T-cost;
-- so ~20% more T at a given ε;
-- two-point slope estimates of ~8.3 (meas) and ~12 (unitary) per log₃, vs 6.4 / 10.0. These are uncertain.
+Run `python3 compute_nt_comparison.py --generic`.
 
-Gustafson's C+R fits are over generic θ. **The like-for-like headline needs generic-θ fits at f = 12–16** (requested from Nick). The C+D advantage over C+R is expected to shrink from ~3.3–3.8× to roughly 2.5–3×. The qubit-parity statement (0.8–0.9×) likely becomes ~1×–1.2×. Treat the numbers above as optimistic until that refit.
+**N_D (per phase, convention A, best-ε approximant):** −3.6 + 6.86·log₃(1/ε), giving ~140 at 10⁻¹⁰. That is higher than C+R Householder (5.14) and Exhaustive (4.11).
+
+**N_T for C+D:**
+
+| Gadget model | best copy | per log₁₀ | at 10⁻¹⁰ | as given |
+|---|---|---|---|---|
+| Measurement + feed-forward (4 T) | **−4.7 + 8.39·log₃** | 17.6 | **171** | 2.9 + 8.48·log₃ → 181 |
+| Unitary + merging | **−3.9 + 9.42·log₃** | 19.8 | **194** | 5.0 + 9.54·log₃ → 205 |
+| Unitary (7 T) | −6.5 + 12.68·log₃ | 26.6 | 259 | 6.9 + 12.83·log₃ → 276 |
+
+- **Robustness:** fitting only levels 8–14 changes the 10⁻¹⁰ values by ≤ 3 T.
+- **Measured ε:**
+  - generic: 3.4e-5 (level 8), 3.2e-6 (10), 2.5e-7 (12), 2.0e-8 (14), a steady ~2.3 in log₃(1/ε) per 2 levels;
+  - special: 12–56× smaller at the same level, at the same T.
+
+**Against C+R** (same gadget model):
+
+| Model | C+D | C+R Householder | C+R Exhaustive |
+|---|---|---|---|
+| Unitary | 259 | 776 (3.0×) | 619 (2.4×) |
+| Merged | 194 | 554 (2.9×) | 442 (2.3×) |
+| Measurement | 171 | 444 (2.6×) | 354 (2.1×) |
+
+**Against qubits at 10⁻¹⁰:**
+
+| | Per rotation | Per arbitrary qutrit gate (6×) | vs 2-qubit det (997) | vs 2-qubit RUS (474) |
+|---|---|---|---|---|
+| C+D measurement | 171 | 1,027 | **1.03×** | 2.17× |
+| C+D merged | 194 | 1,161 | **1.17×** | 2.45× |
+| C+D unitary | 259 | 1,555 | 1.56× | 3.28× |
+
+**Revised framing:**
+- **Against deterministic qubit synthesis:** qutrit C+D is at parity to ~1.2× with two-qubit emulation.
+- **Against qubit RUS:** ~2.2–2.5× behind.
+- **Against qutrit C+R:** 2.1–3.0× cheaper.
+
+**Caveat:** our search covers only the Householder family. On Nick's 25 angles it ties his statistically, and each search finds matrices the other misses. A best-of-both per angle would lower these numbers slightly.

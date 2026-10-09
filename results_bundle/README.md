@@ -1,8 +1,36 @@
-# Qutrit Clifford+D vs Clifford+R: results bundle (2026-10-01)
+# Qutrit Clifford+D vs Clifford+R: results bundle (2026-10-01, headline updated 2026-10-09)
 
-This bundle collects every result from the 2026-09-29 → 10-01 work, with the code to recompute it. **Convention A (signed, R charged) is adopted** (decision 2026-10-01, below). Convention B is shown in `01` for comparison only.
+This bundle collects every result from the 2026-09-29 → 10-09 work, with the code to recompute it. **Convention A (signed, R charged) is adopted** (decision 2026-10-01, below). Convention B is shown in `01` for comparison only.
 
-## Headline (updated 2026-10-02): T per R_z rotation at ε = 10⁻¹⁰, all models like-for-like
+## Headline (2026-10-09): T per R_z rotation at a PRESCRIBED (generic) angle, ε = 10⁻¹⁰
+
+**Data:**
+- **C+D:** best fits at generic angles.
+  - Our Householder-family search (`prescribed_best/`, `hrsa/multi_theta`), with 500 angles at levels 2–12 and 100 at level 14.
+  - Nick's generic f = 8, 10, which we cross-checked.
+  - The data reach ε ≈ 2×10⁻⁸.
+- **"Best copy"** is the cheapest of 324 exact ±ζ-phase conjugations; all have identical ε.
+- **C+R:** Gustafson et al. fits (generic angles), with each R costed in the same gadget model.
+
+Regenerate with `python3 compute_nt_comparison.py --generic`.
+
+| Gadget model | **C+D best copy** | C+D as given | C+R Householder | C+R Exhaustive | C+D advantage |
+|---|---|---|---|---|---|
+| Unitary (level-4 = R = 7 T) | **259** (−6.5 + 12.68·log₃) | 276 | 776 | 619 | **3.0× / 2.4×** |
+| Unitary + rotation merging | **194** (−3.9 + 9.42·log₃) | 205 | 554 | 442 | **2.9× / 2.3×** |
+| Measurement + Clifford feed-forward (4 T) | **171** (−4.7 + 8.39·log₃) | 181 | 444 | 354 | **2.6× / 2.1×** |
+
+- **These replace the 10-02 special-angle headline** (206 / 154 / 136, below) for prescribed rotations.
+  - Nick's special-angle matrices each choose their own best angle.
+  - At a fixed level they cost the same T as generic angles (within ~3% at levels 6–12), but reach a 12–56× smaller ε (levels 8–14).
+  - So the special-angle fits are ~25% optimistic at 10⁻¹⁰.
+- **Per-phase count (N_D) at generic angles:** −3.6 + 6.86·log₃.
+  - That is above C+R Householder's 5.14, so the old "C+D ≈ C+R per phase" tie holds only for special angles.
+  - **The fault-tolerant T-cost advantage (2.1–3.0×) survives either way.**
+- **Qubits, per arbitrary single-qutrit gate** (6 rotations vs ≥ 10 qubit rotations for two-qubit emulation): C+D is **1.03× (measurement) / 1.17× (merged)** the deterministic qubit cost, and 2.2–2.5× qubit RUS. Details are in `08`.
+- **Search coverage:** our search is restricted to the Householder family. On Nick's 25 generic angles it ties his statistically: median ratio of our best ε to his is 0.98 and 1.00, and each search finds matrices the other misses.
+
+## Headline (superseded for prescribed angles, 2026-10-02): special angles
 
 C+D: Nick's exact approximants, 30 θ × 7 f-levels. "Best copy" = the cheapest of 324 exact ±ζ-phase conjugations, all with identical ε. C+R: Gustafson et al. fits, with each R costed in the same gadget model.
 
@@ -56,6 +84,7 @@ C+D: Nick's exact approximants, 30 θ × 7 f-levels. "Best copy" = the cheapest 
 | `06_synthesis_findings.md` | Residual-R bug, candidate selection by T-cost, null results, the "111" predictor, Euler merging |
 | `tables_generated_measurement_w4-4_wr-4.md` | Same tables in the measurement model (`compute_tables.py --w4 4 --wr 4`) |
 | `08_NT_fits_and_qubit_comparison.md` | **N_D and N_T fit lines** (all gadget models), C+R in T units, and the **qutrit vs qubit** comparison (per rotation and per arbitrary gate), with caveats. Numbers come from `compute_nt_comparison.py` |
+| `../prescribed_best/README.md` | Generic-angle method (multi_theta, Fincke–Pohst), validation, per-level tables, comparison with Nick |
 | `07_open_items.md` | What's open, and the request to Nick |
 | `tables_generated.md` | All numeric tables, written by `compute_tables.py` (don't hand-edit) |
 | `compute_tables.py` | Recomputes every table from `nick_test/nick_tcost_2026-09-30.csv` and the published fits. `--w4/--wr` change the gadget weights |

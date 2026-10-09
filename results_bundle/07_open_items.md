@@ -25,7 +25,9 @@
 - **Qutrit RUS** (tabled). It cannot break the C+D/C+R tie, but could narrow the gap to qubit RUS.
 - **An approximation stage that targets low T-cost directly**, rather than filtering error-optimal candidates.
 
-## NEW (2026-10-08): generic-θ refit needed
-Nick's 25-θ fits show the special-θ headline is optimistic (~15× better ε at a given f; see `nick_fits25/README.md`).
-
-**Ask Nick for:** generic-θ best fits at f = 12, 14, 16 (ideally ~100 uniform θ, matching Gustafson), with the ε window wide enough that every fit is confirmed. Then refit N_T, using `nick_fits25/analyze_fits25.py` as the template.
+## RESOLVED (2026-10-09): generic-θ refit
+- **Done with our own data** (`prescribed_best/`, levels 2–14) plus Nick's generic f = 8, 10. Headline: README / `08`.
+- **Still open:**
+  - **Level 16:** needs 64-bit ring arithmetic in `hrsa/multi_theta`.
+  - **Best-of-both per angle:** run Nick's search at our angles, or extend ours beyond the Householder family.
+  - **The "C+D ≈ C+R per phase" statement must be rewritten.** At generic angles, N_D slope is 6.86 vs 5.14 per log₃.

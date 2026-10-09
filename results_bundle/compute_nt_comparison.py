@@ -6,6 +6,8 @@ Inputs:
   ../symmetry_variants/full30_f*_candidates.csv(.gz) per copy: N_D
   ../nick_request/topk_run/fast_all30_candidates.csv  ε per (f, θ)
   ../nick_test/nick_tcost_2026-09-30.csv              900-matrix as-given N_D fit
+  ../prescribed_best/ (fit_generic.load)               GENERIC-θ best fits, levels 2-14 + Nick f=8,10
+                                                       (the headline since 2026-10-09; --generic)
 Published baselines (hard-coded, cited in the .md):
   C+R (Gustafson et al. 2503.20203): N_R = 3.20 + 10.77·log10 (Householder), 2.193 + 8.621·log10 (Exhaustive)
   qubit deterministic (Ross–Selinger 1403.2975): N_T ≈ 3·log2(1/ε)
@@ -38,6 +40,35 @@ def fit(pts):
     x, y = zip(*pts)
     b, a = np.polyfit(x, y, 1)
     return a, b
+
+
+def generic():
+    """Headline (2026-10-09): generic-θ fits, best symmetric copy, all (θ, level) points."""
+    import sys
+    sys.path.insert(0, str(U / "prescribed_best"))
+    import fit_generic as G
+    pts = G.load()
+    x = [L3(p[1]) for p in pts]
+    b, a = np.polyfit(x, [p[3] for p in pts], 1)
+    print(f"GENERIC N_D (best-ε approximant, n={len(pts)}): {a:.2f} + {b:.3f}·log3  ({b * LOG3_10:.2f}·log10)  -> {a + b * L3(1e-10):.1f} @1e-10")
+    fits = {}
+    for m, c in (("unitary", "T_unit"), ("merged", "T_merged"), ("meas", "T_meas")):
+        for s, ix in (("asis", 0), ("best", 1)):
+            sel = [p for p in pts if p[2][c][ix] is not None]
+            b, a = np.polyfit([L3(p[1]) for p in sel], [p[2][c][ix] for p in sel], 1)
+            fits[(m, s)] = (a, b)
+            print(f"GENERIC N_T {m:8s} {s:5s} (n={len(sel)}): {a:5.2f} + {b:.3f}·log3  ({b * LOG3_10:.2f}·log10)  -> {a + b * L3(1e-10):6.1f} @1e-10")
+    e = 1e-10
+    qdet = 3 * math.log2(1 / e)
+    qrus = 9.2 + 1.15 * math.log2(1 / e)
+    for m in ("meas", "merged", "unitary"):
+        a, b = fits[(m, "best")]
+        cd = a + b * L3(e)
+        crh = R_T[m] * (CR["Householder"][0] + CR["Householder"][1] * 10)
+        cre = R_T[m] * (CR["Exhaustive"][0] + CR["Exhaustive"][1] * 10)
+        print(f"GENERIC C+D {m:8s} best: rotation {cd:.0f}; vs C+R Householder {crh:.0f} (x{crh / cd:.2f}), Exhaustive {cre:.0f} (x{cre / cd:.2f}); "
+              f"per rotation x{cd / qdet:.2f} det, x{cd / qrus:.2f} RUS; arbitrary gate 6x = {6 * cd:.0f}: "
+              f"x{6 * cd / (10 * qdet):.2f} det, x{6 * cd / (10 * qrus):.2f} RUS")
 
 
 def main():
@@ -84,4 +115,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+    generic() if "--generic" in sys.argv else main()
