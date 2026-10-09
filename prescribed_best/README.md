@@ -25,7 +25,9 @@ HRSA's level-f enumeration covers the whole lattice ball and is θ-independent e
 Validated: identical (x_1, x_2) candidate sets for all 150 level-6 angles (12,677 candidates),
 in 34 s on 8 threads vs ~45 min on 26 HRSA workers. `mt_to_pool.py` converts its output to pool format.
 Level 6 is now 500 θ via multi_theta (costs_l6.csv; the original 150-θ HRSA run is costs_l6_hrsa150.csv).
-Level 8 (500 θ, target 3e-4) runs on Lenore: ~7 h on 8 threads; `overnight_l8.sh` pulls and analyzes.
+Level 8 (500 θ, target 3e-4) ran on Lenore: 5.1 h on 8 threads, 2.7 GB; all 500 θ have candidates (median pool 371).
+It cross-checks Nick's generic f=8: median best ε 3.4e-5 (ours, 500 θ) vs 3.9e-5 (Nick, 25 θ);
+best-copy unitary T 112.9 vs 118.1. The fits below include it; see fit_generic_output.txt for the current table.
 
 ## HRSA changes made for this (2026-10-08)
 Default behaviour is unchanged.
