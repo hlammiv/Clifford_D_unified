@@ -3,7 +3,9 @@
 
 Points, one per (θ, level), taking the best fit at that level:
   levels 2, 4, 6 : costs_l{2,4,6}.csv (analyze_pools.py; same angles as the Oct-3 sweep)
+  level 8        : costs_l8.csv (multi_theta pools, our HRSA semantics), when present
   levels 8, 10   : ../nick_fits25/fits25_results.csv (Nick, 25 θ each)
+Level labels in the tables carry the source: o = ours, N = Nick.
 Two selections per model:
   as-is      : the best-ε approximant itself
   best copy  : min over its 324 ±ζ symmetric copies (only θ with copies computed)
@@ -23,18 +25,18 @@ NAMES = {"T_unit": "unitary 7-T", "T_merged": "merged", "T_meas": "measurement 4
 
 def load():
     pts = []                                   # (level, eps, {model: (asis, copy|None)}, N_D)
-    for l in (2, 4, 6):
+    for l in (2, 4, 6, 8):
         p = H / f"costs_l{l}.csv"
         if not p.exists():
             continue
         for r in csv.DictReader(open(p)):
             m = {k: (float(r[k]), float(r[k + "_copy"]) if r.get(k + "_copy") else None) for k in SPECIAL}
-            pts.append((l, float(r["eps"]), m, float(r["N_D"])))
+            pts.append((l, float(r["eps"]), m, float(r["N_D"]), "ours"))
     for r in csv.DictReader(open(H.parent / "nick_fits25" / "fits25_results.csv")):
         if r["unitary_exact"] != "1":
             continue
         m = {k: (float(r[k + "_asis"]), float(r[k + "_best"])) for k in SPECIAL}
-        pts.append((int(r["f"]), float(r["eps"]), m, float(r["N_D_asis"])))
+        pts.append((int(r["f"]), float(r["eps"]), m, float(r["N_D_asis"]), "Nick"))
     return pts
 
 
@@ -73,20 +75,20 @@ def fit(x, y):
 
 def main():
     pts = load()
-    levels = sorted({p[0] for p in pts})
-    print("points per level:", {l: sum(p[0] == l for p in pts) for l in levels})
+    levels = sorted({(p[0], p[4]) for p in pts})
+    print("points per (level, source):", {f"{l}{s[0]}": sum((p[0], p[4]) == (l, s) for p in pts) for l, s in levels})
     print("\nper-level means (best fit at each θ)")
     print(f"{'level':>5} {'n':>4} {'med eps':>9} {'log3(1/e)':>9} {'N_D':>6} " +
           " ".join(f"{NAMES[k]:>22}" for k in SPECIAL))
-    for l in levels:
-        q = [p for p in pts if p[0] == l]
+    for l, src in levels:
+        q = [p for p in pts if (p[0], p[4]) == (l, src)]
         e = np.median([p[1] for p in q])
         cells = []
         for k in SPECIAL:
             a = np.mean([p[2][k][0] for p in q])
             c = [p[2][k][1] for p in q if p[2][k][1] is not None]
             cells.append(f"{a:8.1f} / {np.mean(c):6.1f} (n={len(c):3d})" if c else f"{a:8.1f}")
-        print(f"{l:>5} {len(q):>4} {e:9.2e} {np.log(1 / e) / np.log(3):9.2f} {np.mean([p[3] for p in q]):6.1f} " + " ".join(f"{c:>22}" for c in cells))
+        print(f"{str(l) + src[0]:>5} {len(q):>4} {e:9.2e} {np.log(1 / e) / np.log(3):9.2f} {np.mean([p[3] for p in q]):6.1f} " + " ".join(f"{c:>22}" for c in cells))
     print("  (cells: as-is / best symmetric copy)")
 
     x_all = np.array([np.log(1 / p[1]) / np.log(3) for p in pts])
@@ -109,16 +111,16 @@ def compare_levels(pts):
     print("\nsame level, generic vs special θ (best copy, mean T; ε = median)")
     print(f"{'level':>5} {'eps generic':>11} {'eps special':>11} {'ratio':>6}  " +
           "  ".join(f"{NAMES[k]:>17}" for k in SPECIAL))
-    for l in sorted({p[0] for p in pts}):
+    for l, src in sorted({(p[0], p[4]) for p in pts}):
         if l not in sp:
             continue
-        q = [p for p in pts if p[0] == l]
+        q = [p for p in pts if (p[0], p[4]) == (l, src)]
         eg = np.median([p[1] for p in q])
         cells = []
         for k in SPECIAL:
             c = [p[2][k][1] for p in q if p[2][k][1] is not None]
             cells.append(f"{np.mean(c):6.1f} vs {sp[l][k][1]:6.1f}")
-        print(f"{l:>5} {eg:11.2e} {sp[l]['eps']:11.2e} {eg / sp[l]['eps']:6.1f}  " + "  ".join(f"{c:>17}" for c in cells))
+        print(f"{str(l) + src[0]:>5} {eg:11.2e} {sp[l]['eps']:11.2e} {eg / sp[l]['eps']:6.1f}  " + "  ".join(f"{c:>17}" for c in cells))
 
 
 if __name__ == "__main__":

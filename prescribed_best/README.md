@@ -18,6 +18,15 @@ Goal: put the T-cost headline on **generic angles**. Gustafson's C+R fits use ge
 - **`fit_generic.py`:** combines these with Nick's generic f=8,10 fits (`../nick_fits25/`) and compares with the special-θ data level by level.
 - Pools are in `pools_l*.tar.gz`, per-θ summaries in `index_l*.csv`, costs in `costs_l*.csv`, and the fit output in `fit_generic_output.txt`.
 
+## multi_theta (hrsa/multi_theta.cpp): one enumeration for all θ
+HRSA's level-f enumeration covers the whole lattice ball and is θ-independent except for the x_1 test, so
+`multi_theta THETA_FILE EPS F MAX_SOLNS OUT_DIR` enumerates once and runs the pair search per θ
+(same semantics as `HRSA_tester ... --no-direct --min-f F --no-decompose`, k3 = 1).
+Validated: identical (x_1, x_2) candidate sets for all 150 level-6 angles (12,677 candidates),
+in 34 s on 8 threads vs ~45 min on 26 HRSA workers. `mt_to_pool.py` converts its output to pool format.
+Level 6 is now 500 θ via multi_theta (costs_l6.csv; the original 150-θ HRSA run is costs_l6_hrsa150.csv).
+Level 8 (500 θ, target 3e-4) runs on Lenore: ~7 h on 8 threads; `overnight_l8.sh` pulls and analyzes.
+
 ## HRSA changes made for this (2026-10-08)
 Default behaviour is unchanged.
 1. **`--no-decompose`** is now implemented. Before, it was silently ignored, as is any unknown flag. Skipping decomposition is ~1000× faster for pool collection.
