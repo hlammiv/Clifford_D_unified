@@ -1,4 +1,4 @@
-points per (level, source): {'2o': 500, '4o': 500, '6o': 499, '8N': 25, '8o': 500, '10N': 25, '10o': 497}
+points per (level, source): {'2o': 500, '4o': 500, '6o': 499, '8N': 25, '8o': 500, '10N': 25, '10o': 497, '12o': 490, '14o': 99}
 
 per-level means (best fit at each θ)
 level    n   med eps log3(1/e)    N_D            unitary 7-T                 merged        measurement 4-T
@@ -9,13 +9,15 @@ level    n   med eps log3(1/e)    N_D            unitary 7-T                 mer
    8o  500  3.36e-05      9.38   61.3    127.4 /  112.9 (n=100)     94.5 /   84.7 (n=100)     82.6 /   74.0 (n=100)
   10N   25  3.78e-06     11.36   74.5    158.8 /  142.2 (n= 25)    116.3 /  105.0 (n= 25)    102.5 /   93.2 (n= 25)
   10o  497  3.19e-06     11.52   76.1    155.9 /  137.1 (n=100)    115.7 /  103.4 (n=100)    101.3 /   91.2 (n=100)
+  12o  490  2.48e-07     13.84   91.3    184.8 /  171.4 (n= 99)    137.4 /  128.3 (n= 99)    120.5 /  112.8 (n= 99)
+  14o   99  1.99e-08     16.14  105.6    214.4 /  198.7 (n= 99)    158.7 /  148.2 (n= 99)    139.7 /  130.8 (n= 99)
   (cells: as-is / best symmetric copy)
 
 fits N = a + b·log₃(1/ε) over all (θ, level) points
-  N_D               :  -4.2 +  6.96·log₃   (special-θ headline 3.94 + 5.16)
-  unitary 7-T       : as-is   6.6 + 12.87·log₃ (@1e-10:   276) | best copy  -5.5 + 12.49·log₃ (@1e-10:   256) | special-θ best copy 2.5 + 9.71·log₃ (@1e-10:  206)
-  merged            : as-is   4.7 +  9.58·log₃ (@1e-10:   206) | best copy  -3.5 +  9.32·log₃ (@1e-10:   192) | special-θ best copy 3.3 + 7.21·log₃ (@1e-10:  154)
-  measurement 4-T   : as-is   2.6 +  8.52·log₃ (@1e-10:   181) | best copy  -4.5 +  8.33·log₃ (@1e-10:   170) | special-θ best copy 1.8 + 6.42·log₃ (@1e-10:  136)
+  N_D               :  -3.6 +  6.86·log₃   (special-θ headline 3.94 + 5.16)
+  unitary 7-T       : as-is   6.9 + 12.82·log₃ (@1e-10:   276) | best copy  -6.5 + 12.68·log₃ (@1e-10:   259) | special-θ best copy 2.5 + 9.71·log₃ (@1e-10:  206)
+  merged            : as-is   5.0 +  9.54·log₃ (@1e-10:   205) | best copy  -3.9 +  9.42·log₃ (@1e-10:   194) | special-θ best copy 3.3 + 7.21·log₃ (@1e-10:  154)
+  measurement 4-T   : as-is   2.8 +  8.48·log₃ (@1e-10:   181) | best copy  -4.7 +  8.39·log₃ (@1e-10:   171) | special-θ best copy 1.8 + 6.42·log₃ (@1e-10:  136)
 
 same level, generic vs special θ (best copy, mean T; ε = median)
 level eps generic eps special  ratio        unitary 7-T             merged    measurement 4-T
@@ -25,3 +27,5 @@ level eps generic eps special  ratio        unitary 7-T             merged    me
    8o    3.36e-05    2.82e-06   11.9    112.9 vs  111.2     84.7 vs   83.5     74.0 vs   73.7
   10N    3.78e-06    2.20e-07   17.2    142.2 vs  139.9    105.0 vs  104.1     93.2 vs   91.2
   10o    3.19e-06    2.20e-07   14.5    137.1 vs  139.9    103.4 vs  104.1     91.2 vs   91.2
+  12o    2.48e-07    6.89e-09   36.1    171.4 vs  172.2    128.3 vs  127.8    112.8 vs  113.3
+  14o    1.99e-08    3.56e-10   56.0    198.7 vs  186.6    148.2 vs  141.3    130.8 vs  125.1

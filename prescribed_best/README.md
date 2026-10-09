@@ -45,9 +45,40 @@ best-copy unitary T 112.9 vs 118.1. The fits below include it; see fit_generic_o
 | 8 | 500 | 89 s (older join; now faster) | 5.1 h (ball) |
 | 10 | 500 | ~18 min (older join), ~3 min est. now | infeasible (months) |
 | 12 | 500 | 8.7 min, Lenore | – |
-| 14 | 100 | running | – |
+| 14 | 100 | 61 min, Lenore | – |
 
 f ≤ 7 only, since int ring arithmetic overflows beyond that.
+
+## Results through level 14 (2026-10-09)
+Generic best fits, best symmetric copy, mean T per θ (`fit_generic_output.txt`). o = ours, N = Nick.
+
+| Level | n | median ε | unitary T | merged | measurement | special-θ median ε | ε ratio | special unitary T |
+|---|---|---|---|---|---|---|---|---|
+| 8o | 500 | 3.4e-5 | 112.9 | 84.7 | 74.0 | 2.8e-6 | 12 | 111.2 |
+| 10o | 497 | 3.2e-6 | 137.1 | 103.4 | 91.2 | 2.2e-7 | 14 | 139.9 |
+| 12o | 490 | 2.5e-7 | 171.4 | 128.3 | 112.8 | 6.9e-9 | 36 | 172.2 |
+| 14o | 99 | 2.0e-8 | 198.7 | 148.2 | 130.8 | 3.6e-10 | 56 | 186.6 |
+
+- **Same-level T:** generic and special agree within 1–3% at levels 6–12 and within 4–7% at level 14.
+- **ε:** generic gains a steady ~2.3 in log₃(1/ε) per 2 levels. Special gains faster, so the gap grows (selection effect).
+
+**Generic fits** (best copy, all points; levels 8–14 alone agree within 3 T at 1e-10):
+
+| Model | Fit | At 1e-10 | Special-θ headline |
+|---|---|---|---|
+| Unitary 7-T | −6.5 + 12.68·log₃ | 259 | 206 |
+| Merged | −3.9 + 9.42·log₃ | 194 | 154 |
+| Measurement 4-T | −4.7 + 8.39·log₃ | 171 | 136 |
+
+**Against Nick on his own 25 angles** (`index_nick_angles_l*.csv`, our fp search):
+
+| Level | Ours better | Equal | Nick better | We find none | Median ours/Nick |
+|---|---|---|---|---|---|
+| 8 | 12 | 8 | 4 | 1 | 0.98 |
+| 10 | 8 | 10 | 5 | 2 | 1.00 |
+
+- Our search covers only the Householder family V = P01(I − u u†), with k3 = 1. Nick's covers other matrices at the same level, so neither search dominates.
+- Statistically they agree. The per-θ optimum is best-of-both.
 
 ## HRSA changes made for this (2026-10-08)
 Default behaviour is unchanged.
