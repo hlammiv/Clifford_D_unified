@@ -31,6 +31,10 @@
 
 using namespace std;
 
+// 64-bit ring arithmetic (2026-10-09): at f = 8 coefficient products reach ~3e9.
+using R9 = ringZ9Base<long long>;
+using R9c = ringZ9chiBase<long long>;
+
 static const double FILTER_REL_TOL = 1e-6;   // as householder_search.cpp
 static const double cos_vals[6] = {1.0, 0.766044443118978, 0.17364817766693041, -0.5, -0.9396926207859083, -0.9396926207859084};
 static const double sin_vals[6] = {0.0, 0.6427876096865393, 0.984807753012208, 0.8660254037844387, 0.3420201433256689, -0.34202014332566866};
@@ -49,14 +53,14 @@ static int pow3(int n) { int p = 1; while (n-- > 0) p *= 3; return p; }
 // exactly HRSA's float filters. Same valid pairs as the ball enumeration; work ∝ output.
 // ---------------------------------------------------------------------------------------
 static const double PI = 3.14159265358979323846;
-typedef array<int, 6> NKey;
+typedef array<long long, 6> NKey;   // 64-bit: at f = 8 norm coefficients reach ~2e9
 // Real-subring element a + b(ζ+ζ⁻¹) + c(ζ²+ζ⁻²) has reduced power-basis coefficients
 // (a, b−c, c−b, 0, −c, −b), so (coef0, coef4, coef5) determines it: a 3-int key.
-struct K3 { int a, b, c; };
-static inline uint64_t k3hash(int a, int b, int c) {
-	uint64_t h = (uint64_t)(uint32_t)a * 0x9E3779B97F4A7C15ULL;
-	h ^= (uint64_t)(uint32_t)b * 0xC2B2AE3D27D4EB4FULL; h = (h << 31) | (h >> 33);
-	h ^= (uint64_t)(uint32_t)c * 0x165667B19E3779F9ULL;
+struct K3 { long long a, b, c; };
+static inline uint64_t k3hash(long long a, long long b, long long c) {
+	uint64_t h = (uint64_t)a * 0x9E3779B97F4A7C15ULL;
+	h ^= (uint64_t)b * 0xC2B2AE3D27D4EB4FULL; h = (h << 31) | (h >> 33);
+	h ^= (uint64_t)c * 0x165667B19E3779F9ULL;
 	return h ^ (h >> 29);
 }
 struct FlatK3 {                       // open addressing, linear probing; value = class index
@@ -70,7 +74,7 @@ struct FlatK3 {                       // open addressing, linear probing; value 
 			keys[h] = ks[i]; vals[h] = i;
 		}
 	}
-	inline int find(int a, int b, int c) const {
+	inline int find(long long a, long long b, long long c) const {
 		uint64_t h = k3hash(a, b, c) & mask;
 		while (vals[h] >= 0) {
 			const K3& k = keys[h];
@@ -81,7 +85,7 @@ struct FlatK3 {                       // open addressing, linear probing; value 
 	}
 };
 struct NKeyHash { size_t operator()(const NKey& k) const { size_t h = 1469598103934665603ULL;
-	for (int v : k) { h ^= (size_t)(unsigned)v; h *= 1099511628211ULL; } return h; } };
+	for (long long v : k) { h ^= (size_t)v; h *= 1099511628211ULL; } return h; } };
 
 struct FP {
 	double R[6][6];      // upper-triangular factor of the reduced basis (R[j][i], i >= j)
@@ -172,8 +176,8 @@ static void fp_enumerate(double tre, double tim, double thr, int f, vector<array
 }
 
 int main(int argc, char** argv) {
-	if (argc != 6 && argc != 7) {
-		cerr << "usage: multi_theta THETA_FILE EPS F MAX_SOLNS OUT_DIR [fp]" << endl;
+	if (argc < 6 || argc > 8) {
+		cerr << "usage: multi_theta THETA_FILE EPS F MAX_SOLNS OUT_DIR [fp [FROB_CAP]]" << endl;
 		return 1;
 	}
 	vector<double> thetas;
@@ -182,8 +186,13 @@ int main(int argc, char** argv) {
 	const int f = atoi(argv[3]);
 	const int max_solns = atoi(argv[4]);
 	const string out_dir = argv[5];
-	const bool use_fp = (argc == 7 && string(argv[6]) == "fp");
-	if (f > 7) { cerr << "f > 7 would overflow the int ring arithmetic" << endl; return 1; }
+	const bool use_fp = (argc >= 7 && string(argv[6]) == "fp");
+	// FROB_CAP (2026-10-09): keep only candidates whose TRUE error ||P01(I − u u†) − T||_F < FROB_CAP.
+	// HRSA's acceptance |u1 − e^{iθ/2}|² + |u2 + 1|² + |u3|² < EPS²/8 fixes the phase of u, which
+	// V does not depend on, so the best Frobenius fit can need EPS ~10× larger than itself.
+	// Use a loose EPS as a prefilter and FROB_CAP to bound the output.
+	const double frob_cap = (argc == 8) ? atof(argv[7]) : 1e300;
+	if (f > 9) { cerr << "f > 9 would overflow the int keys / lattice coordinates" << endl; return 1; }
 	const int K = (int)thetas.size();
 	const double c = 1.0;                       // HRSA_tester default
 	const double eps_cond = epsilon * epsilon / (8.0 * c * c);
@@ -197,9 +206,9 @@ int main(int argc, char** argv) {
 	const double r_lo = 1.0 - sqrt(thr), r_hi = 1.0 + sqrt(thr);
 
 	const int nt = omp_get_max_threads();
-	vector<vector<vector<ringZ9>>> tl_x1(nt, vector<vector<ringZ9>>(K));
-	vector<vector<ringZ9>> tl_x2(nt);
-	vector<unordered_map<int, vector<ringZ9>>> tl_lookup(nt);
+	vector<vector<vector<R9>>> tl_x1(nt, vector<vector<R9>>(K));
+	vector<vector<R9>> tl_x2(nt);
+	vector<unordered_map<int, vector<R9>>> tl_lookup(nt);
 
 	const int max_a3 = (int)ceil(sqrt(A / 3.0));
 	const int total_a3 = 2 * max_a3 + 1;
@@ -225,7 +234,7 @@ int main(int argc, char** argv) {
 			for (int k2 = 0; k2 < 6; ++k2) { re += cos_vals[k2] * a[k2]; im += sin_vals[k2] * a[k2]; }
 			re *= inv_3f; im *= inv_3f;
 		};
-		auto to_ring = [](const array<int, 6>& a) { int arr[9] = {a[0], a[1], a[2], a[3], a[4], a[5], 0, 0, 0}; return ringZ9(arr); };
+		auto to_ring = [](const array<int, 6>& a) { int arr[9] = {a[0], a[1], a[2], a[3], a[4], a[5], 0, 0, 0}; return R9(arr); };
 		size_t visited = 0;
 		{   // x_2 (≈ −1) and x_3 (≈ 0)
 			vector<array<int, 6>> pts;
@@ -235,7 +244,7 @@ int main(int argc, char** argv) {
 			pts.clear();
 			fp_enumerate(0.0, 0.0, thr, f, pts); visited += pts.size();
 			for (auto& a : pts) { double re, im; h_re_im(a, re, im);
-				if (re * re + im * im < thr && conj_ok(a)) { ringZ9 x = to_ring(a); tl_lookup[0][x.quad()].push_back(x); } }
+				if (re * re + im * im < thr && conj_ok(a)) { R9 x = to_ring(a); tl_lookup[0][x.quad()].push_back(x); } }
 		}
 		#pragma omp parallel for schedule(dynamic) reduction(+:visited)
 		for (int k = 0; k < K; ++k) {
@@ -305,12 +314,12 @@ int main(int argc, char** argv) {
 							for (int k = 0; k < 6; ++k) { re += cos_vals[k] * arr[k]; im += sin_vals[k] * arr[k]; }
 							re *= inv_3f; im *= inv_3f;
 							double abs_sq = re * re + im * im;
-							if (abs_sq < thr) tl_lookup[tid][ringZ9(arr).quad()].push_back(ringZ9(arr));
-							if ((re + 1.0) * (re + 1.0) + im * im < thr) tl_x2[tid].push_back(ringZ9(arr));
+							if (abs_sq < thr) tl_lookup[tid][R9(arr).quad()].push_back(R9(arr));
+							if ((re + 1.0) * (re + 1.0) + im * im < thr) tl_x2[tid].push_back(R9(arr));
 							if (abs_sq > r_lo * r_lo && abs_sq < r_hi * r_hi) {
 								for (int k = 0; k < K; ++k) {
 									double dx = re - Tr[k], dy = im - Ti[k];
-									if (dx * dx + dy * dy < thr) tl_x1[tid][k].push_back(ringZ9(arr));
+									if (dx * dx + dy * dy < thr) tl_x1[tid][k].push_back(R9(arr));
 								}
 							}
 						}
@@ -321,22 +330,22 @@ int main(int argc, char** argv) {
 	}
 
 	// Merge.
-	vector<vector<ringZ9>> x1(K);
-	vector<ringZ9> x2;
-	unordered_map<int, vector<ringZ9>> lookup;
+	vector<vector<R9>> x1(K);
+	vector<R9> x2;
+	unordered_map<int, vector<R9>> lookup;
 	for (int t = 0; t < nt; ++t) {
 		for (int k = 0; k < K; ++k) x1[k].insert(x1[k].end(), tl_x1[t][k].begin(), tl_x1[t][k].end());
 		x2.insert(x2.end(), tl_x2[t].begin(), tl_x2[t].end());
 		for (auto& kv : tl_lookup[t]) { auto& d = lookup[kv.first]; d.insert(d.end(), kv.second.begin(), kv.second.end()); }
 	}
 	// Same orderings as entryEnumeration (stable across thread merge order).
-	auto lexless = [](const ringZ9& a, const ringZ9& b) {
+	auto lexless = [](const R9& a, const R9& b) {
 		for (int i = 0; i < 6; ++i) if (a.getTerm(i) != b.getTerm(i)) return a.getTerm(i) < b.getTerm(i);
 		return false;
 	};
 	complex<double> neg_one(-1.0, 0.0);
 	stable_sort(x2.begin(), x2.end(), lexless);
-	stable_sort(x2.begin(), x2.end(), [&](const ringZ9& a, const ringZ9& b) {
+	stable_sort(x2.begin(), x2.end(), [&](const R9& a, const R9& b) {
 		return abs(a.toComplexDouble() - neg_one) < abs(b.toComplexDouble() - neg_one); });
 	size_t n1 = 0; for (auto& v : x1) n1 += v.size();
 	cerr << "[multi] enumeration done: x1 total " << n1 << ", x2 " << x2.size() << ", lookup buckets " << lookup.size() << endl;
@@ -345,13 +354,22 @@ int main(int argc, char** argv) {
 	vector<double> x2_s2(N2), x2_s4(N2);
 	for (int j = 0; j < N2; ++j) { x2_s2[j] = x2[j].GaloisAut(2).abs_val_sq(); x2_s4[j] = x2[j].GaloisAut(4).abs_val_sq(); }
 	const double conj_thr = 2.0 * (double)f_pow_sq * (1.0 + FILTER_REL_TOL);
-	const ringZ9 two_fsq(2 * f_pow_sq);
+	const R9 two_fsq(2 * f_pow_sq);
 	// Norm classes for the fp-mode join: N(x) = x·x̄ (reduced, 6 coefficients) as hash key.
-	auto nkey = [](const ringZ9& x) { ringZ9 n = x.complexConj() * x; n.reduce(); NKey k; for (int i = 0; i < 6; ++i) k[i] = n.getTerm(i); return k; };
+	auto nkey = [](const R9& x) { R9 n = x.complexConj() * x; n.reduce(); NKey k; for (int i = 0; i < 6; ++i) k[i] = n.getTerm(i); return k; };
 	unordered_map<NKey, vector<int>, NKeyHash> g2, g3;
-	vector<ringZ9> x3_all;
+	vector<R9> x3_all;
 	FlatK3 t2; vector<vector<int>> c2_members;
 	vector<K3> c3_keys; vector<vector<int>> c3_members; vector<double> c3_d;
+	// σ_1 window join (2026-10-09): N(x1)+N(x2)+N(x3) = 2·9^f also holds in the σ_1 embedding,
+	// |x1|²+|x2|²+|x3|² = 2·9^f with 0 <= |x3|² < thr·9^f, so |σ_1(x2)|² lies in a window of
+	// width thr·9^f (+ float slack) fixed by x1. Real-subring key (k0,k4,k5) = a+bη1+cη2 with
+	// a = k0, b = −k5, c = −k4, and σ_1(η1) = 2cos(2π/9), σ_1(η2) = 2cos(4π/9).
+	const double ce1 = 2 * cos(2 * PI / 9), ce2 = 2 * cos(4 * PI / 9);
+	auto e1_of = [&](const K3& k) { return (double)k.a - (double)k.c * ce1 - (double)k.b * ce2; };
+	const double nine_f = (double)f_pow_sq;
+	const double e1_slack = 1e-5 + 1e-14 * nine_f;
+	FlatK3 t3; vector<K3> c2_keys; vector<pair<double, int>> c2_by_e1; vector<double> c2_e1_sorted;
 	if (use_fp) {
 		for (int j = 0; j < N2; ++j) g2[nkey(x2[j])].push_back(j);
 		for (auto& kv : lookup) for (auto& x : kv.second) { g3[nkey(x)].push_back((int)x3_all.size()); x3_all.push_back(x); }
@@ -367,16 +385,39 @@ int main(int argc, char** argv) {
 		}
 		sort(order.begin(), order.end());
 		for (auto& o : order) { c3_keys.push_back(k3s[o.second]); c3_members.push_back(m3[o.second]); c3_d.push_back(o.first * (1.0 - 1e-9)); }
+		t3.build(c3_keys);
+		// x_2 classes sorted by e1 = σ_1(N(x_2)) = |σ_1(x_2)|² (exact-integer key evaluated in double).
+		c2_by_e1.resize(ks.size());
+		for (int i = 0; i < (int)ks.size(); ++i) c2_by_e1[i] = {e1_of(ks[i]), i};
+		sort(c2_by_e1.begin(), c2_by_e1.end());
+		c2_e1_sorted.resize(ks.size());
+		for (int i = 0; i < (int)ks.size(); ++i) c2_e1_sorted[i] = c2_by_e1[i].first;
+		c2_keys = ks;
+		// sanity: e1(key) must equal |σ_1(x)|² of a member
+		double dev = 0;
+		for (int i = 0; i < (int)ks.size() && i < 2000; ++i)
+			dev = max(dev, fabs(e1_of(ks[i]) - norm(x2[c2_members[i][0]].toComplexDouble())));
+		cerr << "[fp] e1 key check: max |e1(key) - |sigma1(x)|^2| = " << dev << " (slack " << e1_slack << ")" << endl;
 	}
 
+	auto frob_err = [&](const array<R9c, 3>& cand, int k) {
+		complex<double> u[3] = {cand[0].toComplexDouble(), cand[1].toComplexDouble(), cand[2].toComplexDouble()};
+		complex<double> H[3][3], V[3][3];
+		for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) H[i][j] = (i == j ? 1.0 : 0.0) - u[i] * conj(u[j]);
+		for (int j = 0; j < 3; ++j) { V[0][j] = H[1][j]; V[1][j] = H[0][j]; V[2][j] = H[2][j]; }
+		complex<double> T[3] = {polar(1.0, -0.5 * thetas[k]), polar(1.0, 0.5 * thetas[k]), 1.0};
+		double s = 0;
+		for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) s += norm(V[i][j] - (i == j ? T[i] : 0.0));
+		return sqrt(s);
+	};
 	#pragma omp parallel for schedule(dynamic)
 	for (int k = 0; k < K; ++k) {
 		complex<double> ang(Tr[k], Ti[k]);
-		vector<ringZ9>& X1 = x1[k];
+		vector<R9>& X1 = x1[k];
 		stable_sort(X1.begin(), X1.end(), lexless);
-		stable_sort(X1.begin(), X1.end(), [&](const ringZ9& a, const ringZ9& b) {
+		stable_sort(X1.begin(), X1.end(), [&](const R9& a, const R9& b) {
 			return abs(a.toComplexDouble() - ang) < abs(b.toComplexDouble() - ang); });
-		vector<array<ringZ9chi, 3>> sols;
+		vector<array<R9c, 3>> sols;
 		if (use_fp) {
 			// Norm join (fp mode). A triple is valid iff N(x1)+N(x2)+N(x3) = 2·9^f exactly, with
 			// N(x) = x·x̄ in the real subring; the q- and σ_2/σ_4-sum pre-filters of the loop below
@@ -384,28 +425,32 @@ int main(int argc, char** argv) {
 			// so HRSA's "first passing x_3 per pair" (k3 = 1) selects the same (x_1, x_2) pairs.
 			unordered_map<NKey, vector<int>, NKeyHash> g1;
 			for (int i = 0; i < (int)X1.size(); ++i) g1[nkey(X1[i])].push_back(i);
-			const int C0 = 2 * f_pow_sq;
+			const long long C0 = 2LL * f_pow_sq;
 			for (auto& e1 : g1) {
 				if ((int)sols.size() >= max_solns) break;
 				const NKey& n1 = e1.first;
-				// ε >= d1 + d3 (+ d2 >= 0): x_3 classes sorted by d3, stop once d3 >= eps_cond − min d1.
-				double d1min = 1e300;
-				for (int i : e1.second) d1min = min(d1min, norm(X1[i].toComplexDouble() * inv_3f - ang));
-				const double d3max = eps_cond - d1min;
-				for (int c3 = 0; c3 < (int)c3_keys.size() && c3_d[c3] < d3max; ++c3) {
-					const K3& n3 = c3_keys[c3];
-					int c2 = t2.find(C0 - n1[0] - n3.a, -n1[4] - n3.b, -n1[5] - n3.c);
-					if (c2 < 0) continue;
+				const K3 k1{n1[0], n1[4], n1[5]};
+				const double tgt = 2.0 * nine_f - e1_of(k1);
+				const double lo = tgt - thr * nine_f * (1.0 + 1e-9) - e1_slack, hi = tgt + e1_slack;
+				auto itlo = lower_bound(c2_e1_sorted.begin(), c2_e1_sorted.end(), lo);
+				for (auto it = itlo; it != c2_e1_sorted.end() && *it <= hi; ++it) {
+					const int c2 = c2_by_e1[it - c2_e1_sorted.begin()].second;
+					const K3& n2 = c2_keys[c2];
+					const int c3 = t3.find(C0 - k1.a - n2.a, -k1.b - n2.b, -k1.c - n2.c);
+					if (c3 < 0) continue;
 					for (int i : e1.second) {
-						const ringZ9& x_1 = X1[i];
+						const R9& x_1 = X1[i];
 						for (int j : c2_members[c2]) {
-							const ringZ9& x_2 = x2[j];
+							const R9& x_2 = x2[j];
 							for (int t : c3_members[c3]) {
-								const ringZ9& x_3 = x3_all[t];
-								array<ringZ9chi, 3> cand = {ringZ9chi(x_1, f), ringZ9chi(x_2, f), ringZ9chi(x_3, f)};
+								const R9& x_3 = x3_all[t];
+								array<R9c, 3> cand = {R9c(x_1, f), R9c(x_2, f), R9c(x_3, f)};
 								complex<double> z = cand[0].toComplexDouble();
-								double e = norm(z - ang) + (cand[1] + ringZ9chi(ringZ9(1), 0)).abs_val_sq() + cand[2].abs_val_sq();
-								if (e < eps_cond) { sols.push_back(cand); break; }
+								double e = norm(z - ang) + (cand[1] + R9c(R9(1), 0)).abs_val_sq() + cand[2].abs_val_sq();
+								if (e < eps_cond) {
+									if (frob_cap < 1e299 && frob_err(cand, k) >= frob_cap) break;   // same V for every x_3 in the class
+									sols.push_back(cand); break;
+								}
 							}
 						}
 					}
@@ -413,23 +458,23 @@ int main(int argc, char** argv) {
 			}
 		}
 		for (size_t i = 0; i < X1.size() && !use_fp && (int)sols.size() < max_solns; ++i) {
-			const ringZ9& x_1 = X1[i];
+			const R9& x_1 = X1[i];
 			int q1 = x_1.quad();
 			double s2 = x_1.GaloisAut(2).abs_val_sq(), s4 = x_1.GaloisAut(4).abs_val_sq();
 			for (int j = 0; j < N2 && (int)sols.size() < max_solns; ++j) {
-				const ringZ9& x_2 = x2[j];
+				const R9& x_2 = x2[j];
 				int q2 = x_2.quad();
 				if (q1 + q2 > 2 * f_pow_sq) continue;
 				if (s2 + x2_s2[j] > conj_thr) continue;
 				if (s4 + x2_s4[j] > conj_thr) continue;
 				auto it = lookup.find(2 * f_pow_sq - q1 - q2);
 				if (it == lookup.end()) continue;
-				ringZ9 x3sq = two_fsq - x_1.complexConj() * x_1 - x_2.complexConj() * x_2;
-				for (const ringZ9& x_3 : it->second) {          // k3 = 1: first valid x_3 per pair
+				R9 x3sq = two_fsq - x_1.complexConj() * x_1 - x_2.complexConj() * x_2;
+				for (const R9& x_3 : it->second) {          // k3 = 1: first valid x_3 per pair
 					if (!(x_3.complexConj() * x_3 == x3sq)) continue;
-					array<ringZ9chi, 3> cand = {ringZ9chi(x_1, f), ringZ9chi(x_2, f), ringZ9chi(x_3, f)};
+					array<R9c, 3> cand = {R9c(x_1, f), R9c(x_2, f), R9c(x_3, f)};
 					complex<double> z = cand[0].toComplexDouble();
-					double e = norm(z - ang) + (cand[1] + ringZ9chi(ringZ9(1), 0)).abs_val_sq() + cand[2].abs_val_sq();
+					double e = norm(z - ang) + (cand[1] + R9c(R9(1), 0)).abs_val_sq() + cand[2].abs_val_sq();
 					if (e < eps_cond) { sols.push_back(cand); break; }
 				}
 			}
@@ -438,14 +483,14 @@ int main(int argc, char** argv) {
 		snprintf(path, sizeof path, "%s/t%04d.txt", out_dir.c_str(), k);
 		FILE* fo = fopen(path, "w");
 		for (size_t s = 0; s < sols.size(); ++s) {
-			ringZ9chi c1 = sols[s][0], c2 = sols[s][1], c3 = sols[s][2];
+			R9c c1 = sols[s][0], c2 = sols[s][1], c3 = sols[s][2];
 			c1.reduce(); c2.reduce(); c3.reduce();
 			auto z1 = c1.toComplexDouble(), z2 = c2.toComplexDouble(), z3 = c3.toComplexDouble();
 			fprintf(fo, "CANDDUMP %zu 0 %.17g %.17g %.17g %.17g %.17g %.17g %d", s, z1.real(), z1.imag(),
 			        z2.real(), z2.imag(), z3.real(), z3.imag(), f);
-			for (const ringZ9chi* cc : {&c1, &c2, &c3}) {
-				ringZ9 n = cc->getNumerator();
-				for (int t = 0; t < 6; ++t) fprintf(fo, " %d", n.getTerm(t));
+			for (const R9c* cc : {&c1, &c2, &c3}) {
+				R9 n = cc->getNumerator();
+				for (int t = 0; t < 6; ++t) fprintf(fo, " %lld", n.getTerm(t));
 			}
 			fprintf(fo, " E %d %d %d\n", c1.getExp(), c2.getExp(), c3.getExp());
 		}

@@ -10,7 +10,11 @@ Two selections per model:
   as-is      : the best-ε approximant itself
   best copy  : min over its 324 ±ζ symmetric copies (only θ with copies computed)
 Compared with the special-θ headline (results_bundle/README.md).
+
+--prefix pfcosts uses the PHASE-FREE pools (phase_free.cpp, 2026-10-09) instead; Nick's f8/f10 points are then
+left out of the fit (they come from a phase-restricted search like ours before the fix) but are still printed.
 """
+import argparse
 import collections
 import csv
 import gzip
@@ -23,15 +27,17 @@ SPECIAL = {"T_unit": (2.5, 9.71), "T_merged": (3.3, 7.21), "T_meas": (1.8, 6.42)
 NAMES = {"T_unit": "unitary 7-T", "T_merged": "merged", "T_meas": "measurement 4-T"}
 
 
-def load():
+def load(prefix="costs", nick=True):
     pts = []                                   # (level, eps, {model: (asis, copy|None)}, N_D)
-    for l in (2, 4, 6, 8, 10, 12, 14):
-        p = H / f"costs_l{l}.csv"
+    for l in (2, 4, 6, 8, 10, 12, 14, 16):
+        p = H / f"{prefix}_l{l}.csv"
         if not p.exists():
             continue
         for r in csv.DictReader(open(p)):
             m = {k: (float(r[k]), float(r[k + "_copy"]) if r.get(k + "_copy") else None) for k in SPECIAL}
             pts.append((l, float(r["eps"]), m, float(r["N_D"]), "ours"))
+    if not nick:
+        return pts
     for r in csv.DictReader(open(H.parent / "nick_fits25" / "fits25_results.csv")):
         if r["unitary_exact"] != "1":
             continue
@@ -74,7 +80,10 @@ def fit(x, y):
 
 
 def main():
-    pts = load()
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--prefix", default="costs")
+    a = ap.parse_args()
+    pts = load(a.prefix, nick=(a.prefix == "costs"))
     levels = sorted({(p[0], p[4]) for p in pts})
     print("points per (level, source):", {f"{l}{s[0]}": sum((p[0], p[4]) == (l, s) for p in pts) for l, s in levels})
     print("\nper-level means (best fit at each θ)")
