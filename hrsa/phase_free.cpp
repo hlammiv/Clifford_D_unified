@@ -85,12 +85,13 @@ struct FlatK3 {
 
 static atomic<long long> g_visits(0);
 static double g_lamscale = 1.0;   // env PF_LAMSCALE > 1 enlarges the ellipsoids (completeness check)
-// d1 = |σ_1(x)|² − 9^f, evaluated in long double from the exact norm key (|σ_1(x)|² = σ_1(N(x)) is a fixed
-// real combination of the integer key), so the small difference keeps ~1e-18·9^f absolute accuracy.
-static long double g_c1, g_c2, g_c4, g_c5, g_nine_f;
+// d1 = |σ_1(x)|² − 9^f, evaluated in __float128 from the exact norm key (|σ_1(x)|² = σ_1(N(x)) is a fixed
+// real combination of the integer key), so the small difference carries ~1e-34 relative error of the
+// key terms (~1e-26 absolute at level 16) and the join window is never slack-dominated.
+static __float128 g_c1, g_c2, g_c4, g_c5, g_nine_f;
 static inline double d1_of(const K3& k) {
 	// N(x) reduced coefficients: (c0, c4 − c5, c5 − c4, 0, c4, c5) with key (c0, c4, c5); N is real.
-	const long double c0 = k.a, c4 = k.b, c5 = k.c;
+	const __float128 c0 = k.a, c4 = k.b, c5 = k.c;
 	return (double)((c0 - g_nine_f) + (c4 - c5) * g_c1 + (c5 - c4) * g_c2 + c4 * g_c4 + c5 * g_c5);
 }
 struct Pt { int a[6]; cd z; double e1, d1; K3 k; };   // z = σ_1(x)/3^f, e1 = |σ_1(x)|² (unscaled, double), d1 = e1 − 9^f
@@ -242,14 +243,17 @@ int main(int argc, char** argv) {
 	const int K = (int)thetas.size();
 	const double nine_f = pow3d(2 * f);
 	g_nine_f = nine_f;
-	{ const long double P = 3.14159265358979323846264338327950288L;
-	  g_c1 = cosl(2 * P / 9); g_c2 = cosl(4 * P / 9); g_c4 = cosl(8 * P / 9); g_c5 = cosl(10 * P / 9); }
+	{ const __float128 P = acosq(-1);
+	  g_c1 = cosq(2 * P / 9); g_c2 = cosq(4 * P / 9); g_c4 = cosq(8 * P / 9); g_c5 = cosq(10 * P / 9); }
 	const double eps_cond = EPS * EPS / 8.0;
 	const double thr = eps_cond * (1 + TOL), r = sqrt(thr);
 	if (r >= 0.5) { cerr << "EPS too large for the arc geometry (r = " << r << ")" << endl; return 1; }
 	const double PHI = PI / 18;
 	const double m = asin(r) * (1 + 1e-6) + 1e-12;           // |arg − φ*| bound for a point within r of e^{iφ*}
 	const double s2max = 2.0 * (1 + TOL);
+	// d1 values in the join are O(2r·9^f) (|x|² ≈ 9^f(1 ± r)²); their double rounding is 1e-16 of that,
+	// far below the window width thr·9^f = r²·9^f as long as r > 1e-16. Slack = 1e-13 of the d1 range.
+	const double e1_slack = 1e-13 * (2 * r * nine_f) + 1e-300;
 	// x3: disk of radius r around 0, one representative per norm class.
 	vector<Pt> X3;
 	{
@@ -260,7 +264,7 @@ int main(int argc, char** argv) {
 	}
 	sort(X3.begin(), X3.end(), [](const Pt& A, const Pt& B) { return A.e1 < B.e1; });
 	{ double dev = 0; for (auto& p : X3) dev = max(dev, fabs(p.d1 + nine_f - p.e1) / nine_f);
-	  cerr << "[pf] d1 key check on x3: max |d1 + 9^f − |σ1|²| / 9^f = " << dev << endl;
+	  cerr << "[pf] d1 key check on x3: max |d1 + 9^f − |σ1|²| / 9^f = " << dev << " | join window thr·9^f = " << thr * nine_f << ", slack " << e1_slack << endl;
 	  if (dev > 1e-12) { cerr << "d1 key check FAILED" << endl; return 1; } }
 	FlatK3 t3; { vector<K3> ks; for (auto& p : X3) ks.push_back(p.k); t3.build(ks); }
 
@@ -279,7 +283,6 @@ int main(int argc, char** argv) {
 
 
 	const long long C0i = 2LL * (long long)llround(nine_f);
-	const double e1_slack = 1e-16 * nine_f + 1e-15;   // ≥ 100× the long-double error of d1 (~1e-18·9^f)
 	auto frob_err = [&](const cd u[3], double th) {
 		cd H[3][3], V[3][3];
 		for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j) H[i][j] = (i == j ? 1.0 : 0.0) - u[i] * conj(u[j]);
