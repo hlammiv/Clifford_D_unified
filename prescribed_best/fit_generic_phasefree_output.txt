@@ -1,0 +1,25 @@
+points per (level, source): {'2o': 500, '4o': 500, '6o': 500, '8o': 500, '10o': 500, '12o': 100}
+
+per-level means (best fit at each θ)
+level    n   med eps log3(1/e)    N_D            unitary 7-T                 merged        measurement 4-T
+   2o  500  9.17e-02      2.18   10.3     31.8 /   20.6 (n=100)     23.3 /   15.8 (n=100)     19.4 /   13.0 (n=100)
+   4o  500  5.26e-03      4.78   31.3     67.3 /   52.0 (n=100)     50.6 /   40.3 (n=100)     43.3 /   34.5 (n=100)
+   6o  500  2.05e-04      7.73   45.7    100.4 /   81.8 (n=100)     74.4 /   62.1 (n=100)     64.5 /   54.2 (n=100)
+   8o  500  6.09e-06     10.93   61.4    128.6 /  108.3 (n=100)     95.2 /   82.1 (n=100)     83.3 /   72.4 (n=100)
+  10o  500  3.22e-07     13.61   75.5    153.1 /  135.8 (n=100)    114.0 /  102.6 (n=100)     99.7 /   90.2 (n=100)
+  12o  100  8.82e-09     16.88   92.2    186.1 /  169.2 (n=100)    137.8 /  126.4 (n=100)    121.3 /  111.8 (n=100)
+  (cells: as-is / best symmetric copy)
+
+fits N = a + b·log₃(1/ε) over all (θ, level) points
+  N_D               :   1.6 +  5.45·log₃   (special-θ headline 3.94 + 5.16)
+  unitary 7-T       : as-is  14.3 + 10.32·log₃ (@1e-10:   231) | best copy   1.0 +  9.93·log₃ (@1e-10:   209) | special-θ best copy 2.5 + 9.71·log₃ (@1e-10:  206)
+  merged            : as-is  10.7 +  7.66·log₃ (@1e-10:   171) | best copy   1.9 +  7.38·log₃ (@1e-10:   157) | special-θ best copy 3.3 + 7.21·log₃ (@1e-10:  154)
+  measurement 4-T   : as-is   8.0 +  6.81·log₃ (@1e-10:   151) | best copy   0.5 +  6.60·log₃ (@1e-10:   139) | special-θ best copy 1.8 + 6.42·log₃ (@1e-10:  136)
+
+same level, generic vs special θ (best copy, mean T; ε = median)
+level eps generic eps special  ratio        unitary 7-T             merged    measurement 4-T
+   4o    5.26e-03    5.16e-03    1.0     52.0 vs   51.8     40.3 vs   40.2     34.5 vs   34.8
+   6o    2.05e-04    1.36e-04    1.5     81.8 vs   79.1     62.1 vs   61.2     54.2 vs   52.9
+   8o    6.09e-06    2.82e-06    2.2    108.3 vs  111.2     82.1 vs   83.5     72.4 vs   73.7
+  10o    3.22e-07    2.20e-07    1.5    135.8 vs  139.9    102.6 vs  104.1     90.2 vs   91.2
+  12o    8.82e-09    6.89e-09    1.3    169.2 vs  172.2    126.4 vs  127.8    111.8 vs  113.3
