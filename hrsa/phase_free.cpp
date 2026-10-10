@@ -24,6 +24,12 @@
 // Speed (2026-10-10, ~4× at level 12, output identical): exact per-disk intervals at the enumeration leaf,
 // double-double d1 instead of __float128, running integer coordinates, thread-local reused buffers, and a
 // streaming sort–merge join on a compact d1 array instead of a random-access bucket lookup per x1 point.
+// Second pass (same day, a further ~1.8× at level 12, output identical): the leaf also cuts the inner annulus
+// radius and the two angular half-planes exactly (visits ≈ points), the level above the leaf cuts each disk's
+// v_1-extent (and prunes nodes whose two last basis vectors are parallel in an embedding), and the x1
+// enumeration probes a Bloom filter of the chunk's x2 d1 cells before storing a point, so only the ~5% of x1
+// points that can have a join partner are materialised and sorted (PF_BLOOM_BITS=0 disables it). The per-θ
+// "x1" count in the log is now the number of stored (filter-surviving) x1 points.
 //
 // Usage: phase_free THETA_FILE EPS F MAX_SOLNS OUT_DIR [FROB_CAP [CHUNK_PTS]]
 //   OUT_DIR/t{i:04d}.txt: CANDDUMP lines (best true error first), as multi_theta (mt_to_pool.py).
@@ -93,7 +99,7 @@ struct FlatK3 {
 	}
 };
 
-static atomic<long long> g_visits(0), g_leaves(0);
+static atomic<long long> g_visits(0), g_leaves(0), g_leaves0(0), g_pass(0);
 static double g_lamscale = 1.0;   // env PF_LAMSCALE > 1 enlarges the ellipsoids (completeness check)
 // d1 = |σ_1(x)|² − 9^f from the exact norm key (|σ_1(x)|² = σ_1(N(x)) is a fixed real combination of the
 // integer key). N(x) reduced coefficients: (c0, c4 − c5, c5 − c4, 0, c4, c5) with key (c0, c4, c5), so
@@ -126,6 +132,27 @@ struct Pt { int a[6]; cd z; double e1, d1; K3 k; };   // z = σ_1(x)/3^f, e1 = |
 // (arc = false) or the arc piece |z|² ∈ (rlo2, rhi2), arg(z·cb) ∈ [lo, hi). Margins are applied by the caller.
 struct Filt { bool arc; cd clo, chi; double rlo2, rhi2, s2max; };   // clo = cb·e^{−i·lo}, chi = cb·e^{−i·hi}
 
+// Partner filter for the x1 enumeration (item "existence filter"): a Bloom filter over the d1 cells of the
+// chunk's x2 points. The join needs an x2 with d1(x2) ∈ [elo, elo + win], elo = −d1(x1) − winA − slack; with
+// cells of width cw ≥ win·(1 + 1e-3) that window meets at most the cells q(elo) and q(elo) + 1, so each x2
+// marks q(d1) and q(d1) − 1 and an x1 probes q(elo) only. q(x) = floor((x − dref)·inv) is monotone in x, and the
+// 1e-3 widening of cw covers the rounding of q (≲ 1e-5 at level 16), so no x1 with a partner is ever dropped;
+// the survivors go through the unchanged exact join. One hash, ~16 bits per mark: ~12% false positives.
+struct Bloom {
+	vector<unsigned long long> bits; int shift = 64;
+	static inline unsigned long long h(long long q) { return (unsigned long long)q * 0x9E3779B97F4A7C15ULL; }
+	void build(const vector<double>& D, double dref, double inv, int bits_per_mark) {
+		unsigned long long m = 1ULL << 16;
+		while (m < (unsigned long long)D.size() * 2 * bits_per_mark) m <<= 1;
+		shift = 64 - __builtin_ctzll(m);
+		bits.assign(m / 64, 0);
+		for (double d : D) {
+			const long long q = (long long)floor((d - dref) * inv);
+			for (long long qq = q - 1; qq <= q; ++qq) { const unsigned long long x = h(qq) >> shift; bits[x >> 6] |= 1ULL << (x & 63); }
+		}
+	}
+};
+
 // Fincke–Pohst over a ∈ Z^6 with  q(a) = [(Im w/ht)² + ((Re w − c0)/hr)²]/λ1 + (|σ_2/3^f|² + |σ_4/3^f|²)/λ2 <= R2,
 // w = σ_1(a)·conj(d)/3^f (d a unit direction). LLL-reduced basis (6-D, redone per call). The three
 // embeddings are carried as running sums down the recursion, so a visited point costs a few flops;
@@ -133,9 +160,12 @@ struct Filt { bool arc; cd clo, chi; double rlo2, rhi2, s2max; };   // clo = cb�
 struct FP {
 	double R[6][6], pp[6], R2; long long U[6][6], y[6];   // y: offsets at levels 1..5 (used by the centre recurrence)
 	cd E[6][3];                      // embeddings (σ_1, σ_2, σ_4)/3^f of reduced basis vector i
-	const Filt* F; vector<Pt>* out; vector<double>* dout; double s3f; long long nvis = 0, nleaf = 0;
+	const Filt* F; vector<Pt>* out; vector<double>* dout; double s3f; long long nvis = 0, nleaf = 0, nleaf0 = 0, npass = 0;
 	long long a0[6];                 // y are offsets from the Babai point y0; a = a0 + Σ y_i U_i, a0 = y0·U
 	double Aq[3], invA[3], bnd[3];   // |E_t|², 1/|E_t|² and the widened disk bounds for the leaf intervals
+	double bndin;                    // narrowed inner σ_1 bound (arc only): the excluded middle of the annulus
+	cd cu[3]; double pe[3], sqb[3];  // level-1 cut: cu = conj(E_0)/|E_0|, pe = Im(E_1·cu), sqb = sqrt(bnd)
+	const unsigned long long* bfbits = nullptr; int bfshift = 64; double bfA = 0, bfB = 0, bfdref = 0, bfinv = 0;
 	// Along the last coordinate the three embeddings are lines z_t(v) = S_t + v·E_t, so each disk constraint
 	// (|z_1|² < rhi2, |z_2|², |z_4|² ≤ s2max) is a quadratic in v and cuts an exact interval; the ellipsoid
 	// interval [cj − w, cj + w] is only an outer bound (the product of a rectangle and two disks fills ~1/7
@@ -143,35 +173,72 @@ struct FP {
 	// carries ~1e-16 rounding, while the thickness is ~1e-10 at level 14 — a relative widening of the radius
 	// would be either useless or unsafe), the σ_2/σ_4 bounds by 1e-9, and the interval by 1e-6 in v, so rounding
 	// can never drop a point that passes the exact per-point tests below, which are kept unchanged.
+	// The per-point tests are the exact ones; everything before them only narrows the visited range and is
+	// widened so that rounding can never drop a point the per-point tests would accept.
+	inline void visit(const cd* S, const long long* A, long long v) {
+		const cd z1 = S[0] + (double)v * E[0][0];
+		const double n1 = norm(z1);
+		if (n1 >= F->rhi2) return;
+		if (F->arc && n1 <= F->rlo2) return;
+		if (norm(S[1] + (double)v * E[0][1]) > F->s2max) return;
+		if (norm(S[2] + (double)v * E[0][2]) > F->s2max) return;
+		if (F->arc) {   // arg(z·cb) ∈ [lo, hi) for a window of width < π around the real axis
+			const cd zl = z1 * F->clo, zh = z1 * F->chi;
+			if (zl.imag() < 0 || zh.imag() >= 0) return;
+		}
+		Pt p;
+		for (int c = 0; c < 6; ++c) p.a[c] = (int)(A[c] + v * U[0][c]);   // integer coordinates, carried as running sums
+		p.k = nkey(p.a); p.d1 = d1_of(p.k);
+		++npass;
+		if (bfbits) {   // partner filter: same elo expression as the join (tgt − winA − slack)
+			const double tgt = -p.d1;
+			const double elo = tgt - bfA - bfB;
+			const long long q = (long long)floor((elo - bfdref) * bfinv);
+			const unsigned long long x = Bloom::h(q) >> bfshift;
+			if (!((bfbits[x >> 6] >> (x & 63)) & 1)) return;
+		}
+		cd z = 0; for (int i = 0; i < 6; ++i) z += Z1[i] * (double)p.a[i];
+		p.z = z * s3f; p.e1 = norm(z);
+		out->push_back(p); dout->push_back(p.d1);   // d1 also in a compact array (the join sorts on it)
+	}
 	void leaf(const cd* S, const long long* A, double cj, double w) {
-		double vlo = cj - w, vhi = cj + w;
+		double vlo = cj - w, vhi = cj + w, B0 = 0;
 		++nleaf;
 		for (int t = 0; t < 3; ++t) {
 			const double B = real(S[t] * conj(E[0][t])), C = norm(S[t]) - bnd[t];
 			const double disc = B * B - Aq[t] * C;
-			if (disc < 0) return;
+			if (disc < 0) { ++nleaf0; return; }
 			const double sq = sqrt(disc);
 			vlo = max(vlo, (-B - sq) * invA[t] - 1e-6); vhi = min(vhi, (-B + sq) * invA[t] + 1e-6);
+			if (t == 0) B0 = B;
 		}
-		long long lo = (long long)ceil(vlo), hi = (long long)floor(vhi);
-		if (hi >= lo) nvis += hi - lo + 1;
-		for (long long v = lo; v <= hi; ++v) {
-			const cd z1 = S[0] + (double)v * E[0][0];
-			const double n1 = norm(z1);
-			if (n1 >= F->rhi2) continue;
-			if (F->arc && n1 <= F->rlo2) continue;
-			if (norm(S[1] + (double)v * E[0][1]) > F->s2max) continue;
-			if (norm(S[2] + (double)v * E[0][2]) > F->s2max) continue;
-			if (F->arc) {   // arg(z·cb) ∈ [lo, hi) for a window of width < π around the real axis
-				const cd zl = z1 * F->clo, zh = z1 * F->chi;
-				if (zl.imag() < 0 || zh.imag() >= 0) continue;
+		long long h1, l2;   // visited: [lo, h1] ∪ [l2, hi] (the gap is the inside of the inner σ_1 disk)
+		if (F->arc) {
+			// Angular half-planes: Im((S_0 + v·E_0)·c) = al + v·be is linear in v. Skipped when the line is
+			// nearly parallel to the boundary (|be| < 1e-8: the root would carry ~1e-16/|be| of rounding).
+			for (int s = 0; s < 2; ++s) {
+				const cd c = s ? F->chi : F->clo;
+				const double al = imag(S[0] * c), be = imag(E[0][0] * c);
+				if (fabs(be) < 1e-8) continue;
+				const double vb = -al / be, wd = 1e-6 + 1e-9 * fabs(vb);
+				// clo: al + v·be ≥ 0;  chi: al + v·be < 0
+				if ((be > 0) == (s == 0)) vlo = max(vlo, vb - wd); else vhi = min(vhi, vb + wd);
 			}
-			Pt p;
-			for (int c = 0; c < 6; ++c) p.a[c] = (int)(A[c] + v * U[0][c]);   // integer coordinates, carried as running sums
-			cd z = 0; for (int i = 0; i < 6; ++i) z += Z1[i] * (double)p.a[i];
-			p.z = z * s3f; p.e1 = norm(z); p.k = nkey(p.a); p.d1 = d1_of(p.k);
-			out->push_back(p); dout->push_back(p.d1);   // d1 also in a compact array (the join sorts on it)
 		}
+		const long long lo = (long long)ceil(vlo), hi = (long long)floor(vhi);
+		if (hi < lo) { ++nleaf0; return; }
+		h1 = hi; l2 = hi + 1;
+		if (F->arc) {   // exclude the open interval where |z_1|² < bndin (narrowed inner radius, shrunk by 1e-6 in v)
+			const double C = norm(S[0]) - bndin, disc = B0 * B0 - Aq[0] * C;
+			if (disc > 0) {
+				const double sq = sqrt(disc);
+				const double a = (-B0 - sq) * invA[0] + 1e-6, b = (-B0 + sq) * invA[0] - 1e-6;
+				if (a < b) { h1 = min(hi, (long long)floor(a)); l2 = max(lo, (long long)ceil(b)); }   // floor(a) < ceil(b): disjoint
+			}
+		}
+		nvis += max(0LL, h1 - lo + 1) + max(0LL, hi - l2 + 1);
+		for (long long v = lo; v <= h1; ++v) visit(S, A, v);
+		for (long long v = l2; v <= hi; ++v) visit(S, A, v);
 	}
 	void rec(int j, double dist, const cd* S, const long long* A) {
 		double cj = pp[j];
@@ -181,7 +248,23 @@ struct FP {
 		if (rem < 0) return;
 		double w = sqrt(rem);
 		if (j == 0) { leaf(S, A, cj, w); return; }
-		long long lo = (long long)ceil(cj - w), hi = (long long)floor(cj + w);
+		double vlo = cj - w, vhi = cj + w;
+		if (j == 1) {
+			// Level-1 cut: in the (v_1, v_0) plane each disk is an ellipse; its v_1-extent is where the component of
+			// S_t + v_1·E_1t orthogonal to E_0t (a line ps + v_1·pe in that scalar) stays within sqrt(bnd_t).
+			// Adjacent reduced vectors are often real-subring multiples of each other, so E_1t ∥ E_0t exactly and
+			// the orthogonal component is the constant ps: then either every v_1 passes or the whole node is empty
+			// (|v_1·pe| ≤ 1e-9·vmax is allowed for).
+			const double vmax = max(fabs(vlo), fabs(vhi));
+			for (int t = 0; t < 3; ++t) {
+				const double ps = imag(S[t] * cu[t]);
+				if (fabs(pe[t]) < 1e-9) { if (fabs(ps) > sqb[t] + 1e-6 + 1e-9 * vmax) return; continue; }
+				double a = (-sqb[t] - ps) / pe[t], b = (sqb[t] - ps) / pe[t];
+				if (a > b) swap(a, b);
+				vlo = max(vlo, a - 1e-6 - 1e-9 * fabs(a)); vhi = min(vhi, b + 1e-6 + 1e-9 * fabs(b));
+			}
+		}
+		long long lo = (long long)ceil(vlo), hi = (long long)floor(vhi);
 		for (long long v = lo; v <= hi; ++v) {
 			y[j] = v;
 			double d = R[j][j] * (v - cj), nd = dist + d * d;
@@ -196,7 +279,8 @@ struct FP {
 // Gram entries span 1e18 at level 14, 1e22 at 16), so Gram–Schmidt and LLL are done in __float128
 // (1e-34): once per chunk, negligible cost. Double LLL silently lost 99% of the points at level 14.
 typedef __float128 qd;
-static void fp_enum(cd d, double c0, double ht, double hr, double lam1, double lam2, double R2, int f, const Filt& flt, vector<Pt>& out, vector<double>& dout) {
+struct PFilt { const Bloom* bf; double A, B, dref, inv; };   // partner filter parameters (x1 enumeration only)
+static void fp_enum(cd d, double c0, double ht, double hr, double lam1, double lam2, double R2, int f, const Filt& flt, vector<Pt>& out, vector<double>& dout, const PFilt* pf = nullptr) {
 	const double s3f = 1.0 / pow3d(f), w2 = 1.0 / sqrt(lam2);
 	ht *= sqrt(lam1); hr *= sqrt(lam1);
 	qd L[6][6];
@@ -267,9 +351,14 @@ static void fp_enum(cd d, double c0, double ht, double hr, double lam1, double l
 	for (int t = 0; t < 3; ++t) S0[t] *= s3f;
 	fp.R2 = R2; fp.F = &flt; fp.out = &out; fp.dout = &dout; fp.s3f = s3f;
 	const double bq[3] = {flt.rhi2 + 1e-6 * (flt.rhi2 - flt.rlo2) + 1e-13, flt.s2max * (1 + 1e-9), flt.s2max * (1 + 1e-9)};
-	for (int t = 0; t < 3; ++t) { fp.Aq[t] = norm(fp.E[0][t]); fp.invA[t] = 1.0 / fp.Aq[t]; fp.bnd[t] = bq[t]; }
+	for (int t = 0; t < 3; ++t) {
+		fp.Aq[t] = norm(fp.E[0][t]); fp.invA[t] = 1.0 / fp.Aq[t]; fp.bnd[t] = bq[t];
+		fp.cu[t] = conj(fp.E[0][t]) / sqrt(fp.Aq[t]); fp.pe[t] = imag(fp.E[1][t] * fp.cu[t]); fp.sqb[t] = sqrt(bq[t]);
+	}
+	fp.bndin = flt.rlo2 - 1e-6 * (flt.rhi2 - flt.rlo2) - 1e-13;
+	if (pf && pf->bf) { fp.bfbits = pf->bf->bits.data(); fp.bfshift = pf->bf->shift; fp.bfA = pf->A; fp.bfB = pf->B; fp.bfdref = pf->dref; fp.bfinv = pf->inv; }
 	fp.rec(5, 0.0, S0, fp.a0);
-	g_visits += fp.nvis; g_leaves += fp.nleaf;
+	g_visits += fp.nvis; g_leaves += fp.nleaf; g_leaves0 += fp.nleaf0; g_pass += fp.npass;
 }
 
 
@@ -390,7 +479,7 @@ int main(int argc, char** argv) {
 	// so the x2 chunks partition the arc exactly.
 	// out is cleared and filled in place (buffers are thread-local and reused across chunks: the per-chunk
 	// allocation and page-faulting of ~100 MB vectors cost ~15% system time at level 14).
-	auto arc_points = [&](cd base, double lo, double hi, vector<Pt>& out, vector<double>& dout) {
+	auto arc_points = [&](cd base, double lo, double hi, vector<Pt>& out, vector<double>& dout, const PFilt* pf) {
 		const double ph = 0.5 * (hi - lo), mid = 0.5 * (hi + lo);
 		const cd d = base * polar(1.0, mid);
 		const double rin = (1 - r) * cos(ph), rout = 1 + r;
@@ -398,7 +487,7 @@ int main(int argc, char** argv) {
 		Filt flt{true, conj(base) * polar(1.0, -(lo - 1e-12)), conj(base) * polar(1.0, -(hi + 1e-12)),
 		         (1 - r) * (1 - r) - 1e-12, (1 + r) * (1 + r) + 1e-12, s2max * (1 + 1e-9)};
 		out.clear(); dout.clear();
-		fp_enum(d, c0, ht, hr, 6.0 * g_lamscale, 6.0 * g_lamscale, 1.0 + 1e-6, f, flt, out, dout);   // rectangle ≤ 2 → 1/3, |σ_k|² ≤ 2 → 1/3 each (min-volume weights)
+		fp_enum(d, c0, ht, hr, 6.0 * g_lamscale, 6.0 * g_lamscale, 1.0 + 1e-6, f, flt, out, dout, pf);   // rectangle ≤ 2 → 1/3, |σ_k|² ≤ 2 → 1/3 each (min-volume weights)
 		size_t n = 0;
 		for (size_t i = 0; i < out.size(); ++i) {
 			const Pt& p = out[i];
@@ -428,6 +517,9 @@ int main(int argc, char** argv) {
 
 	const double DMAX = ((1 + r) * (1 + r) - 1) * nine_f * (1 + 1e-9);   // arc points have |z|² − 1 ∈ ((1−r)² − 1, (1+r)² − 1)
 	const double DMIN = ((1 - r) * (1 - r) - 1) * nine_f * (1 + 1e-9);
+	const double winA = thr * nine_f * (1 + 1e-9);                    // join window: d1(x2) ∈ [−d1(x1) − winA − slack, −d1(x1) + slack]
+	const double cw = (winA + 2 * e1_slack) * (1 + 1e-3);             // partner-filter cell width (see Bloom)
+	const int bloom_bits = getenv("PF_BLOOM_BITS") ? atoi(getenv("PF_BLOOM_BITS")) : 16;   // 0 disables the filter
 	// Work unit = (x2 chunk, block of groups): the x2 points of a chunk are θ-independent and shared by the block.
 	const int nt = omp_get_max_threads();
 	const int TB = max(1, min(G, (int)((long long)G * NC / (4 * nt))));
@@ -441,10 +533,13 @@ int main(int argc, char** argv) {
 		static thread_local vector<double> e2, D1, D2;   // D1/D2: compact d1 of X1/X2
 		static thread_local vector<DI> k1, k1tmp;   // (d1, index) of X1 in increasing d1
 		static thread_local vector<int> idx2;      // X2 is left in enumeration order; e2/idx2 give the increasing-d1 order
-		arc_points(cd(-1, 0), lo, hi, X2, D2);
+		static thread_local Bloom bloom;
+		arc_points(cd(-1, 0), lo, hi, X2, D2, nullptr);
 		sort_by_d1(D2, DMIN, DMAX, k1, k1tmp);
 		e2.resize(X2.size()); idx2.resize(X2.size());
 		for (size_t j = 0; j < X2.size(); ++j) { e2[j] = k1[j].first; idx2[j] = k1[j].second; }
+		PFilt pf{nullptr, winA, e1_slack, DMIN, 1.0 / cw};
+		if (bloom_bits > 0) { bloom.build(D2, DMIN, 1.0 / cw, bloom_bits); pf.bf = &bloom; }
 		double tB = omp_get_wtime(), ux1 = 0, ujn = 0;
 		for (int g = kb * TB; g < min(G, (kb + 1) * TB); ++g) {
 		const vector<int>& grp = groups[g];
@@ -453,7 +548,7 @@ int main(int argc, char** argv) {
 		for (int q = 0; q < ng; ++q) emth[q] = polar(1.0, -0.5 * thetas[grp[q]]);
 		const double span = half(grp.back()) - half(grp.front());
 		double tC = omp_get_wtime();
-		arc_points(conj(emth[0]), lo - 2 * m, hi + 2 * m + span, X1, D1);
+		arc_points(conj(emth[0]), lo - 2 * m, hi + 2 * m + span, X1, D1, &pf);
 		double tD = omp_get_wtime(); ux1 += tD - tC;
 		vector<vector<Cand>> loc(ng); long long np = 0; vector<long long> na(ng, 0);
 		// Sort–merge join on d1: x1 in decreasing d1 → the x2 window [−d1 − thr·9^f, −d1] moves up monotonically,
@@ -464,7 +559,7 @@ int main(int argc, char** argv) {
 		for (size_t i1 = k1.size(); i1-- > 0;) {     // decreasing d1(x1)
 			const DI& kk = k1[i1];
 			const double tgt = -kk.first;          // d1(x2) = −d1(x1) − |σ_1(x3)|², |σ_1(x3)|² ∈ [0, thr·9^f)
-			const double elo = tgt - thr * nine_f * (1 + 1e-9) - e1_slack, ehi = tgt + e1_slack;
+			const double elo = tgt - winA - e1_slack, ehi = tgt + e1_slack;
 			while (j0 < e2.size() && e2[j0] < elo) ++j0;
 			if (j0 >= e2.size()) break;
 			if (e2[j0] > ehi) continue;
@@ -506,7 +601,8 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	cerr << "[pf] thread-seconds: x2 enum " << t_x2 << ", x1 enum " << t_x1 << ", join " << t_join << " | leaf calls " << g_leaves.load() << " visits " << g_visits.load() << endl;
+	cerr << "[pf] thread-seconds: x2 enum " << t_x2 << ", x1 enum " << t_x1 << ", join " << t_join << " | leaf calls " << g_leaves.load()
+	     << " (empty " << g_leaves0.load() << ") visits " << g_visits.load() << " passed " << g_pass.load() << endl;
 	for (int k = 0; k < K; ++k) {
 		auto& v = res[k];
 		sort(v.begin(), v.end(), [](const Cand& A, const Cand& B) { return A.frob < B.frob; });
