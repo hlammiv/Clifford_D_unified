@@ -26,6 +26,7 @@
 #include "cyclotomic_int9.h"
 #include "Z9chi.h"
 #include <omp.h>
+#include <quadmath.h>
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -146,27 +147,31 @@ struct FP {
 		}
 	}
 };
+// The weighted basis is extremely ill-conditioned (radial weight 1/hr ~ 1/r ≫ the O(1) σ_2/σ_4 weights:
+// Gram entries span 1e18 at level 14, 1e22 at 16), so Gram–Schmidt and LLL are done in __float128
+// (1e-34): once per chunk, negligible cost. Double LLL silently lost 99% of the points at level 14.
+typedef __float128 qd;
 static void fp_enum(cd d, double c0, double ht, double hr, double lam1, double lam2, double R2, int f, const Filt& flt, vector<Pt>& out) {
 	const double s3f = 1.0 / pow3d(f), w2 = 1.0 / sqrt(lam2);
 	ht *= sqrt(lam1); hr *= sqrt(lam1);
-	double L[6][6];
+	qd L[6][6];
 	for (int i = 0; i < 6; ++i) {
 		cd w = Z1[i] * conj(d) * s3f;
-		L[i][0] = w.imag() / ht; L[i][1] = w.real() / hr;
-		L[i][2] = Z2[i].real() * s3f * w2; L[i][3] = Z2[i].imag() * s3f * w2;
-		L[i][4] = Z4[i].real() * s3f * w2; L[i][5] = Z4[i].imag() * s3f * w2;
+		L[i][0] = (qd)w.imag() / ht; L[i][1] = (qd)w.real() / hr;
+		L[i][2] = (qd)(Z2[i].real() * s3f * w2); L[i][3] = (qd)(Z2[i].imag() * s3f * w2);
+		L[i][4] = (qd)(Z4[i].real() * s3f * w2); L[i][5] = (qd)(Z4[i].imag() * s3f * w2);
 	}
-	double p[6] = {0, c0 / hr, 0, 0, 0, 0};
-	double L0[6][6];
+	qd p[6] = {0, (qd)c0 / hr, 0, 0, 0, 0};
+	qd L0[6][6];
 	for (int i = 0; i < 6; ++i) for (int c = 0; c < 6; ++c) L0[i][c] = L[i][c];
 	FP fp;
 	for (int i = 0; i < 6; ++i) for (int j = 0; j < 6; ++j) fp.U[i][j] = (i == j);
-	double Bs[6][6], mu[6][6], bn[6];
+	qd Bs[6][6], mu[6][6], bn[6];
 	auto gs = [&]() {
 		for (int i = 0; i < 6; ++i) {
 			for (int c = 0; c < 6; ++c) Bs[i][c] = L[i][c];
 			for (int j = 0; j < i; ++j) {
-				double s = 0; for (int c = 0; c < 6; ++c) s += L[i][c] * Bs[j][c];
+				qd s = 0; for (int c = 0; c < 6; ++c) s += L[i][c] * Bs[j][c];
 				mu[i][j] = s / bn[j];
 				for (int c = 0; c < 6; ++c) Bs[i][c] -= mu[i][j] * Bs[j][c];
 			}
@@ -177,21 +182,20 @@ static void fp_enum(cd d, double c0, double ht, double hr, double lam1, double l
 	int k = 1, guard = 0;
 	while (k < 6 && guard++ < 100000) {
 		for (int j = k - 1; j >= 0; --j) {
-			double q = nearbyint(mu[k][j]);
+			qd q = nearbyintq(mu[k][j]);
 			if (q != 0) { for (int c = 0; c < 6; ++c) { L[k][c] -= q * L[j][c]; fp.U[k][c] -= (long long)q * fp.U[j][c]; } gs(); }
 		}
-		if (bn[k] >= (0.99 - mu[k][k - 1] * mu[k][k - 1]) * bn[k - 1]) ++k;
+		if (bn[k] >= ((qd)0.99 - mu[k][k - 1] * mu[k][k - 1]) * bn[k - 1]) ++k;
 		else { for (int c = 0; c < 6; ++c) { swap(L[k][c], L[k - 1][c]); swap(fp.U[k][c], fp.U[k - 1][c]); } gs(); k = max(k - 1, 1); }
 	}
-	// The in-place float updates of L drift from U·L0 (U is exact). Rebuild L = U·L0 so the QR used by the
-	// enumeration describes the true lattice (drift lost boundary points at f = 5).
-	for (int i = 0; i < 6; ++i) for (int c = 0; c < 6; ++c) { double t = 0; for (int j = 0; j < 6; ++j) t += (double)fp.U[i][j] * L0[j][c]; L[i][c] = t; }
+	// Rebuild L = U·L0 from the exact U (the in-place updates drift), then the QR used by the enumeration.
+	for (int i = 0; i < 6; ++i) for (int c = 0; c < 6; ++c) { qd t = 0; for (int j = 0; j < 6; ++j) t += (qd)fp.U[i][j] * L0[j][c]; L[i][c] = t; }
 	gs();
 	for (int j = 0; j < 6; ++j) {
-		double nj = sqrt(bn[j]);
-		for (int i = 0; i < 6; ++i) fp.R[j][i] = (i == j) ? nj : (i > j ? mu[i][j] * nj : 0.0);
-		double s = 0; for (int c = 0; c < 6; ++c) s += Bs[j][c] * p[c];
-		fp.pp[j] = s / nj;
+		qd nj = sqrtq(bn[j]);
+		for (int i = 0; i < 6; ++i) fp.R[j][i] = (i == j) ? (double)nj : (i > j ? (double)(mu[i][j] * nj) : 0.0);
+		qd s = 0; for (int c = 0; c < 6; ++c) s += Bs[j][c] * p[c];
+		fp.pp[j] = (double)(s / nj);
 	}
 	for (int i = 0; i < 6; ++i) {
 		cd e[3] = {0, 0, 0};
@@ -249,7 +253,7 @@ int main(int argc, char** argv) {
 	// x3: disk of radius r around 0, one representative per norm class.
 	vector<Pt> X3;
 	{
-		Filt flt{false, cd(1, 0), cd(1, 0), 0, thr * (1 + 1e-9), s2max * (1 + 1e-9)};
+		Filt flt{false, cd(1, 0), cd(1, 0), 0, thr + 1e-12, s2max * (1 + 1e-9)};
 		vector<Pt> pts;
 		fp_enum(cd(1, 0), 0.0, r, r, 3.0, 6.0, 1.0 + 1e-6, f, flt, pts);   // disk ≤ 1 → 1/3, |σ_k|² ≤ 2 → 1/3 each
 		for (auto& p : pts) if (norm(p.z) < thr) X3.push_back(p);
@@ -298,8 +302,8 @@ int main(int argc, char** argv) {
 		const cd d = base * polar(1.0, mid);
 		const double rin = (1 - r) * cos(ph), rout = 1 + r;
 		const double c0 = 0.5 * (rin + rout), hr = 0.5 * (rout - rin) * (1 + 1e-9) + 1e-15, ht = (1 + r) * sin(ph) * (1 + 1e-9) + 1e-15;
-		Filt flt{true, conj(base) * polar(1.0, -(lo - 1e-9)), conj(base) * polar(1.0, -(hi + 1e-9)),
-		         (1 - r) * (1 - r) - 1e-9, (1 + r) * (1 + r) + 1e-9, s2max * (1 + 1e-9)};
+		Filt flt{true, conj(base) * polar(1.0, -(lo - 1e-12)), conj(base) * polar(1.0, -(hi + 1e-12)),
+		         (1 - r) * (1 - r) - 1e-12, (1 + r) * (1 + r) + 1e-12, s2max * (1 + 1e-9)};
 		vector<Pt> pts;
 		fp_enum(d, c0, ht, hr, 6.0 * g_lamscale, 6.0 * g_lamscale, 1.0 + 1e-6, f, flt, pts);   // rectangle ≤ 2 → 1/3, |σ_k|² ≤ 2 → 1/3 each (min-volume weights)
 		for (auto& p : pts) {

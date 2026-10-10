@@ -1,16 +1,17 @@
 #!/bin/bash
 # Lenore: level 16 phase-free pools, 5 clusters × 10 θ (centres = Oct-3 angles 10–14, spread 4e-8).
-# Queued behind run_pf_lenore.sh (waits for LENORE_DONE). 20 threads, small chunks (RAM ≲ 1 GB).
+# Queued behind run_pf_l14.sh (waits for L14_DONE); aborts if level 12/14 pools are empty. 20 threads, small chunks (RAM ≲ 1 GB).
 # Cap self-calibrates from the finished levels: cap16 = median14 / (median12 / median14) × 1.8.
 set -e
 cd ~/cdft_topk/prescribed
 B=~/cdft_topk/unified/hrsa/phase_free
 PY=~/cdft_topk/venv/bin/python
-until grep -q LENORE_DONE run_pf_lenore.out 2>/dev/null; do sleep 300; done
+until grep -q L14_DONE run_pf_l14.out 2>/dev/null; do sleep 300; done
 cap=$($PY - <<'PY'
 import csv, statistics, math
 med = lambda d: statistics.median(float(r["best_eps"]) for r in csv.DictReader(open(f"{d}/index.csv")) if not math.isnan(float(r["best_eps"])))
 m12, m14 = med("pfp_l12"), med("pfp_l14")
+assert 1e-10 < m14 < m12 < 1e-7, (m12, m14)
 print("%.4g" % (m14 / (m12 / m14) * 1.8))
 PY
 )
