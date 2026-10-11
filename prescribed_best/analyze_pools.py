@@ -3,7 +3,8 @@
 
 Per θ:
   best-ε candidate (= best fit at that level): N_D, n_T3, n_L4, n_R, T_unit, T_merged, T_meas
-  best symmetric copy of it (324 ±ζ conjugations; only for the first --copies-n θ): min T per model
+  best symmetric copy of it (324 ±ζ conjugations; only for the first --copies-n θ): min T per model, and the
+  class content (N_D, n_T3, n_L4, n_R) of that cheapest copy as *_copy_{unit,merged,meas}
   best-of-K: min T over candidates with ε <= tol·best_ε (tol 1.25), and pool counts
 Decomposition: fast exact reducer; merged T: shared-ancilla emit + symbolic merge.
 Usage: python3 analyze_pools.py POOL_DIR --procs 12 --copies-n 100 --out OUT.csv
@@ -80,7 +81,7 @@ def work(item):
     best = cands[0]
     near = [c for c in cands if c["eps"] <= tol * best["eps"]]
     rows = []
-    nbad = 0
+    nbad = nfail = 0
     for c in near:
         V, e_exact = rebuild(c, th)
         if V is None:
@@ -90,27 +91,38 @@ def work(item):
         k = costs(V)
         if k:
             rows.append((c["eps"], k, V))
+        else:
+            nfail += 1                    # decomposition failed (double prefix did not lower sde): counted, not hidden
     if not rows:
         return None
     rows.sort(key=lambda r: r[0])
     e0, k0, V0 = rows[0]
     rec = dict(theta=th, level=2 * best["f"], n_pool=len(cands), n_near=len(near), n_rebuild_bad=nbad, eps=e0,
                **{x: k0[x] for x in ("N_D", "n_T3", "n_L4", "n_R", "T_unit", "T_merged", "T_meas")})
+    ndec = len(rows)
     for m in ("T_unit", "T_merged", "T_meas"):
         rec[m + "_bestK"] = min(k[m] for _, k, _ in rows)
     if do_copies:
         # V0 -> 9 coefficient groups at its denominator for variant_groups
         g = [list(map(int, V0[i][j].num.coefs)) for i in range(3) for j in range(3)]
         f = V0[0][0].denom_pow3
-        bestc = {m: rec[m] for m in ("T_unit", "T_merged", "T_meas")}
+        bestc = {m: k0 for m in ("T_unit", "T_merged", "T_meas")}   # cheapest copy per model (k dict)
         for d, _t in variant_list("conj"):
             gv = variant_groups(g, d, False)
             k = costs(build_ring(gv, f))
             if k:
+                ndec += 1
                 for m in bestc:
-                    bestc[m] = min(bestc[m], k[m])
-        for m, v in bestc.items():
-            rec[m + "_copy"] = v
+                    if k[m] < bestc[m][m]:
+                        bestc[m] = k
+            else:
+                nfail += 1
+        for m, k in bestc.items():
+            rec[m + "_copy"] = k[m]
+            for c in ("N_D", "n_T3", "n_L4", "n_R"):          # class content of that cheapest copy
+                rec[f"{c}_copy_{m[2:]}"] = k[c]
+    rec["n_decomposed"] = ndec
+    rec["n_decomp_fail"] = nfail
     return rec
 
 
