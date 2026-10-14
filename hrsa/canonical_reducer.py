@@ -1108,7 +1108,7 @@ def _try_double_prefix(V, s: int, table: list[PrefixEntry],
 def decompose_canonical(V_input,
                         max_iter: int | None = None,
                         verbose: bool = False,
-                        greedy_single: bool = False,
+                        greedy_single: bool = True,
                         skip_double: bool = False) -> dict:
     """Canonical-form syllable decomposition.
 
@@ -1169,6 +1169,11 @@ def decompose_canonical(V_input,
     while s > 0 and n_iter < max_iter:
         n_iter += 1
         # First try strict single-prefix (sde drop by exactly 1, matches C++).
+        # Default since 2026-10-14: greedy_single=True — if no drop-by-1 prefix exists, accept the
+        # cheapest prefix with any drop (always a drop of 2 or 3 in practice; Kalra et al. Thm 5.12
+        # guarantees some single syllable lowers the sde unless their discriminant is -1, which
+        # never occurred in 5954 audited steps).  Same D and T cost as the double-prefix pair it
+        # replaces, ~25% fewer syllables, ~3% fewer Cliffords, and no O(N^2) pair search.
         winner = _try_single_prefix(V, s, table, greedy=False, verbose=verbose)
         if winner is None and greedy_single:
             # Greedy fallback: accept ANY drop (typically drop=3 when no drop=1

@@ -383,7 +383,7 @@ def _syl(idx):
             "delta": int(PFX_DELTA[idx]), "has_H": True}
 
 
-def decompose_fast(V_input, max_iter=None, verbose=False, greedy_single=False,
+def decompose_fast(V_input, max_iter=None, verbose=False, greedy_single=True,
                    skip_double=False) -> dict:
     """Same signature and return value as cr.decompose_canonical."""
     keys = _selection_keys()
