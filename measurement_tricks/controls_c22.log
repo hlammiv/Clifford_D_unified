@@ -1,0 +1,12 @@
+T1: mana bound t >= 1.0000
+T2: mana bound t >= 2.0000
+T3: mana bound t >= 2.0363
+T1: search1 (1 ancilla, final meas) deterministic hits by T-count 0..6: [0, 1140, 12754, 173152, 121562, 132121, 186453]  [397s]
+T1: search2 (2 ancillas) deterministic orbits by T-count 0..3: [0, 2, 6, 46]  [183s]
+T1: adaptive feasible (orbit, Q) by (t1, t2): {(1, 0): 596, (1, 1): 12, (2, 0): 1393, (2, 1): 1241}  [396s]
+T2: search1 (1 ancilla, final meas) deterministic hits by T-count 0..6: [0, 0, 4495, 71625, 102955, 119185, 146020]  [476s]
+T2: search2 (2 ancillas) deterministic orbits by T-count 0..3: [0, 0, 3, 13]  [232s]
+T2: adaptive feasible (orbit, Q) by (t1, t2): {(1, 1): 596, (1, 2): 12, (2, 0): 606, (2, 1): 643}  [176s]
+T3: search1 (1 ancilla, final meas) deterministic hits by T-count 0..6: [0, 0, 0, 60040, 69632, 112734, 114550]  [325s]
+T3: search2 (2 ancillas) deterministic orbits by T-count 0..3: [0, 0, 0, 3]  [217s]
+T3: adaptive feasible (orbit, Q) by (t1, t2): {(1, 2): 596, (2, 1): 606}  [684s]

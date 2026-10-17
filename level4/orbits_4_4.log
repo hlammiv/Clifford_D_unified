@@ -1,0 +1,17 @@
+[fwd] depth 1: 2 new orbits (total 3)  [1s]
+[fwd] depth 2: 9 new orbits (total 12)  [6s]
+[fwd] depth 3: 89 new orbits (total 101)  [32s]
+[fwd] depth 4: 1627 new orbits (total 1728)  [454s]
+target k=1: in forward orbits?  None
+[bwd k=1] depth 1: 2 new orbits (total 3)  [456s]
+[bwd k=1] depth 2: 13 new orbits (total 16)  [460s]
+[bwd k=1] depth 3: 230 new orbits (total 246)  [493s]
+[bwd k=1] depth 4: 7644 new orbits (total 7890)  [862s]
+target k=1: MITM exact min t over fwd<= 4, bwd<= 4:  (7, (2, 11, 20, 0), (2, 11, 20)) [872s]
+target k=2: in forward orbits?  None
+[bwd k=2] depth 1: 2 new orbits (total 3)  [873s]
+[bwd k=2] depth 2: 13 new orbits (total 16)  [878s]
+[bwd k=2] depth 3: 230 new orbits (total 246)  [910s]
+[bwd k=2] depth 4: 7644 new orbits (total 7890)  [1249s]
+target k=2: MITM exact min t over fwd<= 4, bwd<= 4:  (7, (2, 11, 20, 1), (2, 11, 20)) [1258s]
+orbit counts fwd by depth: [1, 2, 9, 89, 1627]

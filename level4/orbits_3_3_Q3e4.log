@@ -1,0 +1,15 @@
+[fwd] depth 1: 2 new orbits (total 3)  [2s]
+[fwd] depth 2: 9 new orbits (total 12)  [9s]
+[fwd] depth 3: 89 new orbits (total 101)  [48s]
+target k=1: in forward orbits?  None
+[bwd k=1] depth 1: 2 new orbits (total 3)  [50s]
+[bwd k=1] depth 2: 13 new orbits (total 16)  [54s]
+[bwd k=1] depth 3: 230 new orbits (total 246)  [79s]
+target k=1: MITM exact min t over fwd<= 3, bwd<= 3:  None [79s]
+target k=2: in forward orbits?  None
+[bwd k=2] depth 1: 2 new orbits (total 3)  [81s]
+[bwd k=2] depth 2: 13 new orbits (total 16)  [84s]
+[bwd k=2] depth 3: 230 new orbits (total 246)  [110s]
+target k=2: MITM exact min t over fwd<= 3, bwd<= 3:  None [110s]
+min rounding margin over all states hashed: 0.0007126459447590605  (Q = 30000.0 )
+orbit counts fwd by depth: [1, 2, 9, 89]

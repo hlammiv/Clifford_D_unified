@@ -104,10 +104,11 @@ def cost_R_anwar_lowerbound(p, eps_gate):
     parity checking: ~4 rounds, >=4 states per output per round, delta grows 2x/round (L),
     equatorialisation 8 plus-states per R-state (I), 3 R-states per gate."""
     eps2_needed = eps_gate / INJ_R / 2**4          # delta doubles over 4 parity rounds
-    if p <= eps2_needed:
+    eps2_0 = p / 2                                 # Anwar et al.: eps1 = eps2 = delta/3 for depolarising delta = 3p/2
+    if eps2_0 <= eps2_needed:
         rounds = 0
     else:
-        rounds = math.ceil(math.log(eps2_needed / p) / math.log(0.77))
+        rounds = math.ceil(math.log(eps2_needed / eps2_0) / math.log(0.77))
     return INJ_R * 8 * 4**4 * 5.0**rounds, rounds
 
 

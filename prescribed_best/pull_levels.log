@@ -1,0 +1,56 @@
+[multi] K=500 f=6 eps=1.2e-06 threads=8
+[fp] ellipsoid points visited: 431630018
+[multi] enumeration done: x1 total 95534555, x2 191112, lookup buckets 4317
+[fp] norm classes: x2 95702, x3 4317
+[multi] DONE
+523.46 s wall 8300632 KB
+wrote pool_l12
+L12: 500 angles, 490 with candidates; median best eps 2.48e-07 (max 6.63e-07); median pool 85
+wrote costs_l12.csv 490
+L12 ANALYZED
+[multi] K=100 f=7 eps=1e-07 threads=8
+[fp] ellipsoid points visited: 443987491
+[multi] enumeration done: x1 total 96729148, x2 967298, lookup buckets 20028
+[fp] norm classes: x2 483977, x3 20028
+[multi] DONE
+3635.13 s wall 8071296 KB
+Traceback (most recent call last):
+  File "/home/hlamm/Desktop/efficent_gates/unified/prescribed_best/mt_to_pool.py", line 13, in <module>
+    thetas = [float(x) for x in open(tfile).read().split()]
+                                ^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'thetas_100.txt'
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: 'pool_l14/index.csv'
+wrote costs_l14.csv 0
+L14 ANALYZED
+points per (level, source): {'2o': 500, '4o': 500, '6o': 499, '8N': 25, '8o': 500, '10N': 25, '10o': 497, '12o': 490}
+
+per-level means (best fit at each θ)
+level    n   med eps log3(1/e)    N_D            unitary 7-T                 merged        measurement 4-T
+   2o  500  9.17e-02      2.18   10.4     30.9 /   20.6 (n=100)     22.8 /   15.8 (n=100)     19.1 /   13.0 (n=100)
+   4o  500  6.15e-03      4.63   28.0     72.4 /   56.2 (n=100)     53.3 /   42.4 (n=100)     45.3 /   36.2 (n=100)
+   6o  499  4.91e-04      6.94   46.5     95.7 /   80.5 (n=150)     71.7 /   61.5 (n=150)     62.1 /   53.6 (n=150)
+   8N   25  3.86e-05      9.25   58.9    132.6 /  118.1 (n= 25)     97.5 /   87.6 (n= 25)     84.9 /   76.6 (n= 25)
+   8o  500  3.36e-05      9.38   61.3    127.4 /  112.9 (n=100)     94.5 /   84.7 (n=100)     82.6 /   74.0 (n=100)
+  10N   25  3.78e-06     11.36   74.5    158.8 /  142.2 (n= 25)    116.3 /  105.0 (n= 25)    102.5 /   93.2 (n= 25)
+  10o  497  3.19e-06     11.52   76.1    155.9 /  137.1 (n=100)    115.7 /  103.4 (n=100)    101.3 /   91.2 (n=100)
+  12o  490  2.48e-07     13.84   91.3    184.8 /  171.4 (n= 99)    137.4 /  128.3 (n= 99)    120.5 /  112.8 (n= 99)
+  (cells: as-is / best symmetric copy)
+
+fits N = a + b·log₃(1/ε) over all (θ, level) points
+  N_D               :  -3.8 +  6.89·log₃   (special-θ headline 3.94 + 5.16)
+  unitary 7-T       : as-is   6.9 + 12.82·log₃ (@1e-10:   276) | best copy  -6.5 + 12.67·log₃ (@1e-10:   259) | special-θ best copy 2.5 + 9.71·log₃ (@1e-10:  206)
+  merged            : as-is   4.9 +  9.55·log₃ (@1e-10:   205) | best copy  -4.1 +  9.44·log₃ (@1e-10:   194) | special-θ best copy 3.3 + 7.21·log₃ (@1e-10:  154)
+  measurement 4-T   : as-is   2.8 +  8.49·log₃ (@1e-10:   181) | best copy  -4.9 +  8.41·log₃ (@1e-10:   171) | special-θ best copy 1.8 + 6.42·log₃ (@1e-10:  136)
+
+same level, generic vs special θ (best copy, mean T; ε = median)
+level eps generic eps special  ratio        unitary 7-T             merged    measurement 4-T
+   4o    6.15e-03    5.16e-03    1.2     56.2 vs   51.8     42.4 vs   40.2     36.2 vs   34.8
+   6o    4.91e-04    1.36e-04    3.6     80.5 vs   79.1     61.5 vs   61.2     53.6 vs   52.9
+   8N    3.86e-05    2.82e-06   13.7    118.1 vs  111.2     87.6 vs   83.5     76.6 vs   73.7
+   8o    3.36e-05    2.82e-06   11.9    112.9 vs  111.2     84.7 vs   83.5     74.0 vs   73.7
+  10N    3.78e-06    2.20e-07   17.2    142.2 vs  139.9    105.0 vs  104.1     93.2 vs   91.2
+  10o    3.19e-06    2.20e-07   14.5    137.1 vs  139.9    103.4 vs  104.1     91.2 vs   91.2
+  12o    2.48e-07    6.89e-09   36.1    171.4 vs  172.2    128.3 vs  127.8    112.8 vs  113.3
+PULL_DONE

@@ -15,7 +15,9 @@
 // points (chunk ± 2 asin r) are enumerated with Fincke–Pohst on an ellipse fitted to the arc piece
 // (σ_2, σ_4 bounded by 2·9^f as in multi_theta), then joined through the exact norm equation
 // N(x1) + N(x2) + N(x3) = 2·9^f (σ_1-window on |x2|², hash lookup of the x3 norm class; x3 ranges
-// over the disk of radius r around 0, first member per class as HRSA's k3 = 1).
+// over the disk of radius r around 0, first member per class as HRSA's k3 = 1). The error depends on x3 only
+// through its embedding moduli, so all members of a class tie; at every production level the classes are the
+// orbits {±ζ^k x3} (one class at f = 5 holds two orbits), i.e. diagonal conjugates D V D†, D = diag(1, 1, ±ζ^k).
 // Accepted candidates are ranked by the TRUE error ||V − diag(e^{−iθ/2}, e^{iθ/2}, 1)||_F.
 //
 // θ's whose half-angles lie within PF_GROUP_SPAN (env; default one chunk width) share the x1 enumeration and
@@ -414,6 +416,9 @@ int main(int argc, char** argv) {
 	  g_k1 = split(g_c1 - g_c2); g_k4 = split(g_c4); g_k5 = split(g_c5); g_nine_fd = nine_f; }
 	const double eps_cond = EPS * EPS / 8.0;
 	const double thr = eps_cond * (1 + TOL), r = sqrt(thr);
+	// Ring points carry z = σ_1(x)/3^f with absolute error ~1e-15 (a sum of 3^f-sized terms), i.e. ~1e-4 relative
+	// in e at f = 8; accept with 1e-3 slack and let the true-error cap decide (review C35).
+	const double eps_acc = eps_cond * (1 + 1e-3);
 	if (r >= 0.5) { cerr << "EPS too large for the arc geometry (r = " << r << ")" << endl; return 1; }
 	const double PHI = PI / 18;
 	const double m = asin(r) * (1 + 1e-6) + 1e-12;           // |arg − φ*| bound for a point within r of e^{iφ*}
@@ -573,8 +578,12 @@ int main(int argc, char** argv) {
 				for (int q = 0; q < ng; ++q) {
 					const cd a = p1.z * emth[q];
 					const cd s = a + b;
-					const double e = norm(a) + norm(b) + 2 - 2 * abs(s) + norm(X3[c3].z);
-					if (!(e < eps_cond)) continue;
+					// min over φ of |a − e^{iφ}|² + |b − e^{iφ}|² + |u3|², attained at w = s/|s|. Evaluated as a sum of
+					// small differences: the expanded form |a|² + |b|² + 2 − 2|s| + |u3|² cancels order-one terms and
+					// its double rounding (~1e-15) exceeds eps_cond at f ≥ 6 (review C35).
+					const cd w = s / abs(s);
+					const double e = norm(a - w) + norm(b - w) + norm(X3[c3].z);
+					if (!(e < eps_acc)) continue;
 					const double phis = arg(s);
 					if (phis < -PHI || phis >= PHI) continue;
 					++na[q];
