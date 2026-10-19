@@ -1,0 +1,17 @@
+[pf] d1 key check on x3: max |d1 + 9^f − |σ1|²| / 9^f = 7.43376e-20 | join window thr·9^f = 5.86507e-13, slack 3.34977e-16
+[pf] d1 double-double vs __float128: max diff 0 (slack 3.34977e-16)
+[pf] K=10 f=7 EPS=9.9045e-10 r=3.50177e-10 x3 points 73 | chunks/θ 60218 width 5.7967e-06 | predicted x2 arc points 6.02174e+10 threads 32
+[pf] θ groups: 1 (span 1.5e-06)
+[pf] thread-seconds: x2 enum 31621.6, x1 enum 15755.1, join 859.509 | leaf calls 54939564902 (empty 28011379401) visits 130912812733 passed 128790899407
+[pf] θ#0 x1 3956831260 x2 60217565042 pairs 6123439 accepted 62 kept 62 best 2.97736e-10
+[pf] θ#1 x1 3956831260 x2 60217565042 pairs 6123439 accepted 66 kept 66 best 3.26002e-10
+[pf] θ#2 x1 3956831260 x2 60217565042 pairs 6123439 accepted 70 kept 70 best 3.07366e-10
+[pf] θ#3 x1 3956831260 x2 60217565042 pairs 6123439 accepted 56 kept 56 best 3.97368e-10
+[pf] θ#4 x1 3956831260 x2 60217565042 pairs 6123439 accepted 68 kept 68 best 3.05002e-10
+[pf] θ#5 x1 3956831260 x2 60217565042 pairs 6123439 accepted 74 kept 74 best 2.84971e-10
+[pf] θ#6 x1 3956831260 x2 60217565042 pairs 6123439 accepted 52 kept 50 best 2.89972e-10
+[pf] θ#7 x1 3956831260 x2 60217565042 pairs 6123439 accepted 74 kept 74 best 3.33288e-10
+[pf] θ#8 x1 3956831260 x2 60217565042 pairs 6123439 accepted 58 kept 58 best 2.91522e-10
+[pf] θ#9 x1 3956831260 x2 60217565042 pairs 6123439 accepted 52 kept 52 best 2.97385e-10
+[pf] DONE
+L14_040: 1508.17 s 5998288 KB

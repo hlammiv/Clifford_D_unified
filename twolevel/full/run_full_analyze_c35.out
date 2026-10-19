@@ -1,0 +1,32 @@
+bal_l10a: 2.66 s
+bal_l10b: 2.76 s
+bal_l12a: 2.20 s
+bal_l12b: 1.20 s
+bal_l2: 2.97 s
+bal_l4: 4.08 s
+bal_l6: 5.86 s
+bal_l8: 6.12 s
+s2_l10a: 6.05 s
+s2_l10b: 4.97 s
+s2_l12a: 4.24 s
+s2_l2: 3.79 s
+s2_l4: 5.00 s
+s2_l6: 5.24 s
+s2_l8: 7.35 s
+s3_l10a: 5.64 s
+s3_l10b: 5.46 s
+s3_l12a: 3.32 s
+s3_l2: 3.45 s
+s3_l4: 5.88 s
+s3_l6: 6.10 s
+s3_l8: 6.75 s
+skew_l10a: 7.56 s
+skew_l10b: 5.48 s
+skew_l12a: 3.49 s
+skew_l12b: 3.23 s
+skew_l2: 2.95 s
+skew_l4: 4.48 s
+skew_l6: 2.78 s
+skew_l8: 2.98 s
+FULL_C35_DONE
+EXIT 0

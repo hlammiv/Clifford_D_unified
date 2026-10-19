@@ -1,0 +1,32 @@
+[pf] d1 key check on x3: max |d1 + 9^f − |σ1|²| / 9^f = 7.60054e-17 | join window thr·9^f = 4.30879e-11, slack 9.57051e-16
+[pf] d1 double-double vs __float128: max diff 0 (slack 9.57051e-16)
+[pf] K=25 f=6 EPS=2.5468e-08 r=9.0043e-09 x3 points 73 | chunks/θ 10621 width 3.28656e-05 | predicted x2 arc points 2.12401e+09 threads 14
+[pf] θ groups: 25 (span 3.28656e-05)
+[pf] thread-seconds: x2 enum 324.194, x1 enum 4951.46, join 174.664 | leaf calls 30947465705 (empty 16099919512) visits 55286659268 passed 55286224704
+[pf] θ#0 x1 98978518 x2 2124035401 pairs 928000 accepted 54 kept 54 best 8.39613e-09
+[pf] θ#1 x1 98953433 x2 2124035401 pairs 928948 accepted 58 kept 58 best 7.51527e-09
+[pf] θ#2 x1 98954977 x2 2124035401 pairs 927319 accepted 56 kept 56 best 7.58716e-09
+[pf] θ#3 x1 98956849 x2 2124035401 pairs 928134 accepted 40 kept 40 best 1.30094e-08
+[pf] θ#4 x1 98961939 x2 2124035401 pairs 928744 accepted 44 kept 44 best 7.29656e-09
+[pf] θ#5 x1 98953817 x2 2124035401 pairs 928386 accepted 48 kept 48 best 9.88912e-09
+[pf] θ#6 x1 98964768 x2 2124035401 pairs 927563 accepted 54 kept 54 best 8.78854e-09
+[pf] θ#7 x1 98964439 x2 2124035401 pairs 928062 accepted 38 kept 38 best 7.24669e-09
+[pf] θ#8 x1 98963917 x2 2124035401 pairs 928247 accepted 60 kept 60 best 7.7542e-09
+[pf] θ#9 x1 98954443 x2 2124035401 pairs 931269 accepted 42 kept 42 best 1.03031e-08
+[pf] θ#10 x1 98942095 x2 2124035401 pairs 929164 accepted 16 kept 16 best 1.29932e-08
+[pf] θ#11 x1 98952215 x2 2124035401 pairs 926551 accepted 38 kept 38 best 7.76099e-09
+[pf] θ#12 x1 98963375 x2 2124035401 pairs 928106 accepted 28 kept 28 best 9.23064e-09
+[pf] θ#13 x1 98943732 x2 2124035401 pairs 927468 accepted 40 kept 40 best 7.9279e-09
+[pf] θ#14 x1 98967593 x2 2124035401 pairs 927019 accepted 28 kept 28 best 1.16665e-08
+[pf] θ#15 x1 98945553 x2 2124035401 pairs 929322 accepted 40 kept 40 best 9.45623e-09
+[pf] θ#16 x1 98970043 x2 2124035401 pairs 929442 accepted 40 kept 40 best 8.85819e-09
+[pf] θ#17 x1 98959739 x2 2124035401 pairs 930245 accepted 40 kept 40 best 8.22091e-09
+[pf] θ#18 x1 98965119 x2 2124035401 pairs 926497 accepted 42 kept 42 best 8.88754e-09
+[pf] θ#19 x1 98958174 x2 2124035401 pairs 925667 accepted 42 kept 42 best 8.69283e-09
+[pf] θ#20 x1 98964157 x2 2124035401 pairs 928316 accepted 46 kept 46 best 1.11971e-08
+[pf] θ#21 x1 98938293 x2 2124035401 pairs 928874 accepted 44 kept 44 best 8.25271e-09
+[pf] θ#22 x1 98965937 x2 2124035401 pairs 929532 accepted 36 kept 36 best 7.07167e-09
+[pf] θ#23 x1 98961589 x2 2124035401 pairs 929009 accepted 50 kept 50 best 1.02127e-08
+[pf] θ#24 x1 98969903 x2 2124035401 pairs 928203 accepted 54 kept 54 best 9.94325e-09
+[pf] DONE
+L12_075: 2049.37 s 500708 KB

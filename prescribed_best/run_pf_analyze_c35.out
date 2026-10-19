@@ -1,0 +1,18 @@
+wrote pfcosts_l2.csv 500
+analyze level 2: 26.59 s
+wrote pfcosts_l4.csv 500
+analyze level 4: 83.31 s
+wrote pfcosts_l6.csv 500
+analyze level 6: 134.70 s
+wrote pfcosts_l8.csv 500
+analyze level 8: 192.42 s
+wrote pfcosts_l10.csv 500
+analyze level 10: 225.55 s
+wrote pfcosts_l12.csv 100
+analyze level 12: 239.56 s
+wrote pfcosts_l14.csv 200
+analyze level 14: 539.47 s
+wrote pfcosts_l16.csv 350
+analyze level 16: 1190.29 s
+ANALYZE_C35_DONE
+EXIT 0

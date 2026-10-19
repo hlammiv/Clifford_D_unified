@@ -1,0 +1,45 @@
+2026-10-14 19:06:14 R_z level 2 done
+2026-10-14 19:06:14 R_z level 4 done
+2026-10-14 19:06:15 R_z level 6 done
+2026-10-14 19:06:40 R_z level 8 done
+2026-10-14 19:23:49 R_z level 10 done
+2026-10-14 19:48:06 reflections 2-8 done
+2026-10-14 19:48:07 start F_skew_l10b
+2026-10-14 20:48:01 done F_skew_l10b rc=0
+2026-10-14 20:48:02 start F_skew_l10a
+2026-10-14 21:13:17 done F_skew_l10a rc=0
+2026-10-14 21:13:18 start F_s3_l10b
+2026-10-14 21:32:27 done F_s3_l10b rc=0
+2026-10-14 21:32:28 start F_s3_l10a
+2026-10-14 22:20:22 done F_s3_l10a rc=0
+2026-10-14 22:20:23 start F_s2_l10b
+2026-10-14 22:51:09 done F_s2_l10b rc=0
+2026-10-14 22:51:10 start F_s2_l10a
+2026-10-14 23:17:11 done F_s2_l10a rc=0
+2026-10-14 23:17:12 start F_bal_l10b
+2026-10-14 23:39:55 done F_bal_l10b rc=0
+2026-10-14 23:39:56 start F_bal_l10a
+2026-10-15 00:02:33 done F_bal_l10a rc=0
+2026-10-15 00:02:34 start F_skew_l12b
+2026-10-15 00:58:55 done F_skew_l12b rc=0
+2026-10-15 00:58:57 start F_skew_l12a
+2026-10-15 05:17:03 machine rebooted; F_skew_l12a interrupted, requeued
+2026-10-15 05:17:09 start F_skew_l12a
+2026-10-15 07:27:23 done F_skew_l12a rc=0
+2026-10-15 07:27:24 start F_s3_l12a
+2026-10-15 09:22:53 done F_s3_l12a rc=0
+2026-10-15 09:22:53 start F_s2_l12a
+2026-10-15 11:55:21 done F_s2_l12a rc=0
+2026-10-15 11:55:22 start F_bal_l12b
+2026-10-15 13:11:50 done F_bal_l12b rc=0
+2026-10-15 13:11:50 start F_bal_l12a
+2026-10-15 15:39:57 done F_bal_l12a rc=0
+2026-10-15 15:39:58 start L12_075
+2026-10-15 16:14:07 done L12_075 rc=0
+2026-10-15 16:14:08 start L12_050
+2026-10-15 16:20:55 done L12_050 rc=0
+2026-10-15 16:20:56 start L12_025
+2026-10-15 16:27:34 done L12_025 rc=0
+2026-10-15 16:27:34 start L12_000
+2026-10-15 16:34:06 done L12_000 rc=0
+2026-10-15 16:34:28 WORKER_EXIT
