@@ -7,6 +7,7 @@ D V D^dag approximate the same T (D commutes with T), with H -> D H D^dag, so th
 Weights p >= 0, sum 1, minimise ||sum p_k h_k||_2 (NNLS with a stiff sum row).  Normalised diamond distance of the
 mixture, to second order:  eps_mix <= ||sum p_k H_k||_op + sum p_k ||H_k||_op^2.
 Cost: the T counts of the components that carry weight, decomposed exactly (analyze_pools.costs), averaged with p.
+Error generators are computed at 40 digits from the exact V (generator()).
 Usage: python3 mix_pools.py LEVEL NTHETA --procs 4 --out mix_lLEVEL.csv"""
 import argparse, csv, glob, json, sys
 from multiprocessing import Pool
@@ -23,6 +24,22 @@ _Z = np.exp(2j * np.pi * np.arange(6) / 9)
 
 def to_float(V):
     return np.array([[np.dot([int(x) for x in V[i][j].num.coefs], _Z) / 3 ** V[i][j].denom_pow3 for j in range(3)] for i in range(3)])
+
+
+def generator(V, th):
+    """Traceless Hermitian H with V T^dag = e^{iH} (times a phase), computed at 40 digits from the exact V, then
+    cast to double: its relative error is then ~1e-16 of H itself, not of V, so cancellation can be resolved far
+    below the double-precision floor of V (needed at levels >= 12)."""
+    import mpmath as mpm
+    import exact_check as ec
+    mpm.mp.dps = 40
+    Vm = mpm.matrix([[ec._mp(V[i][j]) for j in range(3)] for i in range(3)])
+    h = mpm.mpf(th) / 2
+    Tdag = mpm.diag([mpm.expj(h), mpm.expj(-h), 1])
+    L = mpm.logm(Vm * Tdag)
+    H = np.array([[complex(-1j * L[i, j]) for j in range(3)] for i in range(3)])
+    H = (H + H.conj().T) / 2
+    return H - np.trace(H) / 3 * np.eye(3)
 
 
 def herm8(H):
@@ -53,10 +70,7 @@ def work(item):
     vl = variant_list("conj")
     Hs, comps = [], []                      # comps: (cand index, variant index)
     for ci, (V, e) in enumerate(Vs):
-        M = to_float(V)
-        H0 = -1j * logm(M @ T.conj().T)
-        H0 = (H0 + H0.conj().T) / 2
-        H0 -= np.trace(H0) / 3 * np.eye(3)
+        H0 = generator(V, th)
         for vi, (d, _t) in enumerate(vl):
             D = np.diag([s * np.exp(2j * np.pi * k / 9) for s, k in d])
             Hs.append(D @ H0 @ D.conj().T); comps.append((ci, vi))
