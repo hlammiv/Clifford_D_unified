@@ -1,0 +1,12 @@
+Exact (40-digit) error generators. Normalised diamond distance bound eps_mix = ||sum p H|| + sum p ||H||^2.
+level  n  median eps_best  median eps_mix  max first/second  comps  T_meas  T_unit  T_merged
+4 100 5.18e-03 2.39e-05 5.3e-11 5.0 43.6 68.1 50.8 (float generators)
+6 100 2.04e-04 3.25e-08 2.3e-08 5.2 63.3 98.1 72.9 (float generators)
+8 100 6.00e-06 4.15e-11 5.4e-06 8.9 82.4 126.9 94.4 (float generators)
+10 100 3.22e-07 7.02e-14 5.8e-07 5.0 100.6 154.4 115.1 
+12 100 8.64e-09 7.35e-17 2.4e-05 5.0 121.0 185.5 137.6 
+14 100 3.00e-10 9.38e-20 7.1e-04 5.0 140.9 216.7 160.5 
+fit on levels 4-14:
+  mixed T_meas: 12.4 + 3.21 log3(1/eps)  -> at 1e-10: 80
+  mixed T_unit: 20.5 + 4.90 log3(1/eps)  -> at 1e-10: 123
+  mixed T_merged: 15.7 + 3.62 log3(1/eps)  -> at 1e-10: 92

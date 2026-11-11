@@ -98,3 +98,50 @@ zeta9/Zeta9.zip
 # Local-only scratch
 /tmp_*
 /scratch_*
+
+# =============================================================
+# Generated run output (regenerable; kept out of Git since 2026-11-11)
+# =============================================================
+*.jsonl
+*.log
+*.err
+*.out
+*.nohup
+*.pkl
+*.npy
+*.aux
+*.gz
+*.zip
+/*.png
+/*.pdf
+
+# Raw per-angle and per-cell run text
+c35_rerun/out*/
+twolevel/full/**/*.txt
+twolevel/pf_*/
+prescribed_best/*_l[0-9]*/
+prescribed_best/*_prev*/
+prescribed_best/fcp
+sweep_*/**/*.json
+prescribed_best/tg*/
+*/raw/
+.pytest_cache/
+**/.pytest_cache/
+nick_test/nick_decompositions*.json
+nick_request/topk_run/
+nick_request/synth/
+
+# Compiled C++ binaries in hrsa/ (build from the .cpp of the same name)
+hrsa/multi_theta
+hrsa/multi_theta64
+hrsa/multi_theta_nj
+hrsa/multi_theta_v[0-9]
+hrsa/phase_free
+hrsa/phase_free_v[0-9]
+hrsa/phase_free_full
+hrsa/phase_free_tl
+hrsa/*_preC35
+
+# Large candidate tables (compressed copies kept locally as .csv.gz)
+symmetry_variants/full30_f*_candidates.csv
+symmetry_variants/stack_full30_rows.csv

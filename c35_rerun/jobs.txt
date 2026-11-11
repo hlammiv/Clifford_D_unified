@@ -1,0 +1,73 @@
+pf L16_000 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16_clu.txt 0 10
+pf L16_010 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16_clu.txt 10 10
+pf L16_020 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16_clu.txt 20 10
+pf L16_030 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16_clu.txt 30 10
+pf L16_040 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16_clu.txt 40 10
+pf L16_050 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 0 10
+pf L16_060 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 10 10
+pf L16_070 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 20 10
+pf L16_080 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 30 10
+pf L16_090 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 40 10
+pf L16_100 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 50 10
+pf L16_110 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 60 10
+pf L16_120 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 70 10
+pf L16_130 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 80 10
+pf L16_140 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16b_clu.txt 90 10
+pf L16_150 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 0 10
+pf L16_160 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 10 10
+pf L16_170 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 20 10
+pf L16_180 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 30 10
+pf L16_190 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 40 10
+pf L16_200 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 50 10
+pf L16_210 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 60 10
+pf L16_220 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 70 10
+pf L16_230 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 80 10
+pf L16_240 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16c_clu.txt 90 10
+pf L16_250 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 0 10
+pf L16_260 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 10 10
+pf L16_270 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 20 10
+pf L16_280 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 30 10
+pf L16_290 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 40 10
+pf L16_300 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 50 10
+pf L16_310 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 60 10
+pf L16_320 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 70 10
+pf L16_330 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 80 10
+pf L16_340 16 8 2.64307e-11 1.868e-11 3e-8 500000 thetas_l16d_clu.txt 90 10
+pf L14_000 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 0 10
+pf L14_010 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 10 10
+pf L14_020 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 20 10
+pf L14_030 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 30 10
+pf L14_040 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 40 10
+pf L14_050 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 50 10
+pf L14_060 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 60 10
+pf L14_070 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 70 10
+pf L14_080 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 80 10
+pf L14_090 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14_clu.txt 90 10
+pf L14_100 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 0 10
+pf L14_110 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 10 10
+pf L14_120 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 20 10
+pf L14_130 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 30 10
+pf L14_140 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 40 10
+pf L14_150 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 50 10
+pf L14_160 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 60 10
+pf L14_170 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 70 10
+pf L14_180 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 80 10
+pf L14_190 14 7 9.9045e-10 7e-10 1.5e-6 1000000 thetas_l14b_clu.txt 90 10
+pf L12_000 12 6 2.5468e-8 1.8e-8 - - thetas_100.txt 0 25
+pf L12_025 12 6 2.5468e-8 1.8e-8 - - thetas_100.txt 25 25
+pf L12_050 12 6 2.5468e-8 1.8e-8 - - thetas_100.txt 50 25
+pf L12_075 12 6 2.5468e-8 1.8e-8 - - thetas_100.txt 75 25
+pff F_bal_l12a bal 12 targets_bal_l12a.txt bal_l12a
+pff F_bal_l12b bal 12 targets_bal_l12b.txt bal_l12b
+pff F_s2_l12a s2 12 targets_s2_l12a.txt s2_l12a
+pff F_s3_l12a s3 12 targets_s3_l12a.txt s3_l12a
+pff F_skew_l12a skew 12 targets_skew_l12a.txt skew_l12a
+pff F_skew_l12b skew 12 targets_skew_l12b.txt skew_l12b
+pff F_bal_l10a bal 10 targets_bal_l10a.txt bal_l10a
+pff F_bal_l10b bal 10 targets_bal_l10b.txt bal_l10b
+pff F_s2_l10a s2 10 targets_s2_l10a.txt s2_l10a
+pff F_s2_l10b s2 10 targets_s2_l10b.txt s2_l10b
+pff F_s3_l10a s3 10 targets_s3_l10a.txt s3_l10a
+pff F_s3_l10b s3 10 targets_s3_l10b.txt s3_l10b
+pff F_skew_l10a skew 10 targets_skew_l10a.txt skew_l10a
+pff F_skew_l10b skew 10 targets_skew_l10b.txt skew_l10b
