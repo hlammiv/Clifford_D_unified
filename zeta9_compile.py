@@ -360,7 +360,8 @@ def ensure_precompute(workdir, f, eps_pre, mpi, sage_env, dry_run=False,
                         "--eps", label,
                         "--eps_bin_width", "0",
                         "--output", str(out.with_suffix("")),
-                        "--resume"]
+                        "--resume",
+                        "--resume_streaming"]
         if check_local_p3k:
             cmd.append("--check_local_p3k")
         times[f"stage1_u{u}"] = run_cmd(cmd, env, workdir, f"stage1 u={u}", dry_run)
