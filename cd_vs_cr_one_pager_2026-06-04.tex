@@ -1,0 +1,113 @@
+\documentclass[10pt]{article}
+\usepackage[margin=0.45in,top=0.35in,bottom=0.35in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{microtype}
+\usepackage{titlesec}
+\titleformat{\section}{\normalsize\bfseries}{}{0em}{}
+\titlespacing*{\section}{0pt}{4pt}{2pt}
+\setlength{\parskip}{1pt}
+\setlength{\parindent}{0pt}
+\linespread{0.94}
+\setlength{\abovedisplayskip}{2pt}
+\setlength{\belowdisplayskip}{2pt}
+\setlength{\abovedisplayshortskip}{1pt}
+\setlength{\belowdisplayshortskip}{1pt}
+
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\zn}{\zeta_9}
+\newcommand{\Zzn}{\Z[\zn,1/3]}
+\newcommand{\Zom}{\Z[\omega_3,1/3]}
+\newcommand{\eps}{\varepsilon}
+
+\begin{document}
+
+\begin{center}
+{\large\bf Qutrit Clifford{+}D and Clifford{+}R have the same asymptotic compilation slope}\\[2pt]
+{\small Henry Lamm (Fermilab / SQMS) \quad\textbullet\quad Version 2026-06-04}
+\end{center}
+
+\vspace{-4pt}
+\noindent\emph{\small ``Nick'' refers to Nick Gnedin (Fermilab/SQMS), the project's parallel exact-ring C{+}D branch.}
+
+\section*{TL;DR}
+
+For generic $U(3)$ targets, qutrit Clifford{+}D (over $\Zzn$) and qutrit Clifford{+}R (over $\Zom$) approximate-synthesize a target $T$ within a narrow band straddling the $SU(3)$ information-theoretic floor
+\begin{equation}
+N_{G}(\eps) \;=\; 4.90\,\log_{3}(1/\eps)\;-\;2.16 \qquad
+\text{(Gustafson \texttt{paper\_main.tex}, line 654).}
+\label{eq:info-floor}
+\end{equation}
+All measured backends fall in $[4.1,\,6.2]\,\log_3(1/\eps)$. The choice of algorithm moves the constant inside this band; the extra algebraic richness of $\Zzn$ does \textbf{not} move it outside in the favorable direction. The extra Galois places buy richer \emph{exact} synthesis but no improvement in the \emph{approximation} slope.
+
+\section*{The result}
+
+The synthesis target $T$ (here $R_z(\theta)$ on a $1$-D submanifold of $SU(3)$) is approximated by a ring element $V$ through the principal complex embedding $\sigma_1$ only; the physical channel never reads the other Galois conjugates. The key identity is the trace decomposition of the Kalra $q$-form on $\Zzn$,
+\begin{equation}
+3\,q(x) \;=\; |\sigma_1(x)|^2 \;+\; |\sigma_2(x)|^2 \;+\; |\sigma_4(x)|^2,
+\qquad q(x) \le B \;=\; 2\cdot 3^{2f},
+\label{eq:qform}
+\end{equation}
+at sde-depth $f$. The Path-C partial theorem proves the $\sigma_1$-projection covering radius is
+\begin{equation}
+\rho_{\sigma_1}\!\bigl(\Zzn,\,B\bigr) \;=\; \Theta\!\bigl(B^{-1/2}\bigr),
+\label{eq:path-c}
+\end{equation}
+matching the smaller $\Zom$ lattice. \emph{Caveat:} this is a rate-matching theorem; it does not prove the constants in the resulting $c\cdot\log_3(1/\eps)$ slope are identical between the two rings --- the slope agreement at the constant level is empirical, not theorem-derived. The extra four real dimensions $(\sigma_2,\sigma_4)$ are spent on $q$-budget, not on covering. Demanding cover $<\eps$ forces $f\gtrsim\log_3(1/\eps)$, and each word costs $O(f)$ non-Clifford gates on both rings.
+
+The empirics line up. Bocharov's 6-D meniscus polytope factors \textbf{exactly} as
+\[
+\text{(2-D meniscus in $\sigma_1$)}\;\times\;\text{(4-D $q$-ball in $\sigma_2,\sigma_4$)},
+\]
+with $\sim 3\times 10^{29}$ analytically-derived points at $f{=}12,\,\eps{=}10^{-4}$ (Minkowski-volume integration over the factored polytope, cross-checked at $f{=}1,2$), giving $\theta$-independent confirmation that the extra places are a free 4-D ball (\texttt{bocharov\_z9\_port\_dead}). Per-cluster $N_D$ from Nick's exact-ring C{+}D vs Gustafson's C{+}R Householder fit
+\begin{equation}
+N^{H}_{R}(\eps) \;=\; 3.20 \;+\; 5.139\,\log_3(1/\eps)
+\qquad (\text{\texttt{paper\_main.tex}, eq.~numhos, lines 631--633})
+\label{eq:nh-r}
+\end{equation}
+agree within $\sim 2$ gates across $f{=}4,\dots,14$ (at $f{=}8$: 62.6 vs 62.9; at $f{=}12$: 90.2 vs 91.1; at $f{=}14$: 102.7 vs 105.0). At $f{=}16$ the Nick mean rises to $119.7$ vs Householder prediction $116.2$. Nick's fit restricted to $f{=}4,\dots,14$ is
+\begin{equation}
+N_{D}^{\text{Nick},\,f\le14}(\eps) \;=\; 5.97 \;+\; 4.890\,\log_3(1/\eps),
+\qquad R^2{=}0.896,\; n{=}750,
+\label{eq:nick-f14}
+\end{equation}
+formally sitting between C{+}R Exhaustive ($4.113\,\log_3$, eq.~numexh) and Householder ($5.139\,\log_3$); jackknife uncertainty $\sim 4.89\pm0.2$ per \texttt{cd\_vs\_cr\_corrected}. Over the full $f{=}4,\dots,16$ window ($n{=}900$),
+\begin{equation}
+N_{D}^{\text{Nick},\,\text{full}}(\eps) \;\approx\; 5.118\,\log_3(1/\eps), \qquad
+z = -0.34 \text{ vs Householder } 5.139,
+\label{eq:nick-full}
+\end{equation}
+i.e.\ \textbf{statistically indistinguishable from Householder}. Both bracket the gate-set-independent $SU(3)$ info-floor of eq.~\eqref{eq:info-floor}. (C{+}R Exhaustive's fit $4.11$ dips below the asymptote because the bound is $\Omega$ with a finite-$\eps$ offset, not an equality.) Independently, Babai-CVP on $\Zzn$ --- the natural geometric attempt to \emph{exploit} the extra Galois dimensions --- is empirically $2.6$--$9\times$ \textbf{worse} than HRSA at $\eps\in[10^{-2},10^{-3}]$ and $\sim 0\%$ success at $\eps\le 10^{-4}$ (\texttt{babai\_cvp\_phase5\_negative}).
+
+\section*{Why nobody noticed before}
+
+\begin{itemize}[leftmargin=*,topsep=2pt,itemsep=2pt]
+\item \textbf{No working C{+}D approximate-synthesis algorithm existed pre-2026.} Kalra 2023 and Deaconu-Kalra-Mosca-Yard 2025 are exact-synthesis only; Evra-Parzanchevski 2024 is a non-constructive arithmeticity proof. The Lamm-group HRSA + zeta9 + Nick pipelines are the first to produce empirical $N_D$ vs $\log_3(1/\eps)$ curves at all.
+\item \textbf{Community expectation ran the opposite way.} Glaudell-Ross-vdW-Yeh 2022 proved
+\[
+C{+}R \;\subsetneq\; C{+}T \;\subseteq\; C{+}D
+\]
+(with $R$ requiring two qutrits to express in C{+}T, and $\omega = \xi^3$ for $\xi = e^{2\pi i/9}$). The chain made it natural to expect C{+}D would strictly out-perform C{+}R, not match it.
+\item \textbf{EvPar Theorem 4.14} gives a non-constructive $c{=}1$ bound $K > \log_3(105) \approx 4.236$ on $\log_\rho(1/\eps)$ with $\rho=\sqrt{105}$; normalized per $\log_3(1/\eps)$ this is a slope of $\sim 2$, but the absence of a constructive rounder means it sets neither a lower bound on what synthesis achieves nor a target anybody had reached. No calibrated comparison point existed.
+\item \textbf{The $\sigma_1$-projection / Path-C framing is novel for qutrits.} It is a Selinger / Bourgain-Gamburd-style lattice-density argument applied specifically to the 6-D vs 4-D embedding gap; nobody had executed that computation in the qutrit setting.
+\end{itemize}
+
+\section*{Strategic implications}
+
+For the paper: \textbf{frame C{+}D as ``matches C{+}R on the asymptotic slope''}, not ``C{+}D beats C{+}R.'' The retracted $1.67\times$ headline (a log-base artifact) stays retracted; the honest framing is the convergence of independent backends --- HRSA, zeta9, Nick on C{+}D; Exhaustive, Householder on C{+}R --- onto the tight band straddling the info-floor of eq.~\eqref{eq:info-floor}. Any future C{+}D vs C{+}R comparison should center on \emph{this convergence}; project effort predicated on a C{+}D slope below C{+}R Exhaustive should be deprioritized.
+
+\vspace{4pt}\hrule\vspace{2pt}
+{\scriptsize\textbf{References \& data.}\;
+\textbf{Gustafson 2025} (arXiv:2503.20203) \texttt{paper\_main.tex} lines 53--56, 626--633, 654 [Exh $4.113(3)\log_3$, H\"older $5.139(14)\log_3$, floor $4.9\log_3-2.16$];
+\textbf{EvPar 2024} (arXiv:2401.16120) Thm.~4.14;
+\textbf{Kalra 2023} (arXiv:2311.08696);
+\textbf{Glaudell-Ross-vdW-Yeh 2022} (arXiv:2202.09235);
+\textbf{Bocharov 2016} (arXiv:1606.02315).
+\emph{Internal memos:} \texttt{cd\_vs\_cr\_corrected}, \texttt{bocharov\_z9\_port\_dead}, \texttt{babai\_cvp\_phase5\_negative}, \texttt{path\_c\_research\_dead}.
+\emph{Data:} \texttt{unified/nick\_test/nick\_nd\_vs\_eps\_all.csv} (900 rows, $f\in\{4,\dots,16\}$).
+\emph{Plot:} \texttt{unified/nd\_vs\_eps\_log10\_allnick\_2026-06-04.png}.
+}
+
+\end{document}
